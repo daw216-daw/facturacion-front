@@ -8,7 +8,7 @@ export default function App() {
 
   if (loading) return <div>Cargando...</div>;
 
-  // console.log('Usuario desde /me:', user);
+
 
   return <RouterProvider router={router} />;
 }

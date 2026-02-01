@@ -11,6 +11,11 @@ import Dashboard from './Dashboard';
 import EmisorDashboard from './EmisorDashboard';
 import ClientesPage from '../features/clientes/pages/ClientesPage';
 import UsersPage from '../features/users/pages/UsersPage';
+import PresupuestosPage from '../features/presupuestos/pages/PresupuestosPage';
+import PresupuestoPreview from '../features/presupuestos/pages/PresupuestoPreview';
+import EmisoresPage from '../features/emisores/pages/EmisoresPage';
+import SeriesPage from '../features/series/pages/SeriesPage';
+import DocumentoTextosPage from '../features/documentoTextos/pages/DocumentoTextosPage';
 
 const router = createBrowserRouter([
   {
@@ -34,6 +39,13 @@ const router = createBrowserRouter([
               { index: true, element: <Dashboard /> },
               { path: 'clientes', element: <ClientesPage /> },
               { path: 'users', element: <UsersPage /> },
+              { path: 'presupuestos', element: <PresupuestosPage /> },
+              { path: 'presupuestos/:id/preview', element: <PresupuestoPreview /> },
+              { path: 'emisores', element: <EmisoresPage /> },
+              { path: 'series', element: <SeriesPage /> },
+              { path: 'documento-textos', element: <DocumentoTextosPage /> },
+
+
             ],
           },
         ],

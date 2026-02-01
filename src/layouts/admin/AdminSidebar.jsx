@@ -10,6 +10,9 @@ import {
 
 import DashboardIcon from '@mui/icons-material/Dashboard';
 import PeopleIcon from '@mui/icons-material/People';
+import RequestQuoteIcon from '@mui/icons-material/RequestQuote';
+import FormatListNumberedIcon from '@mui/icons-material/FormatListNumbered';
+
 
 import { useNavigate } from 'react-router-dom';
 
@@ -85,6 +88,93 @@ export default function AdminSidebar({
             {!collapsed && <ListItemText primary="Usuarios" />}
           </ListItemButton>
         </Tooltip>
+        <Tooltip
+          title="Presupuestos"
+          placement="right"
+          disableHoverListener={!collapsed}
+        >
+          <ListItemButton
+            onClick={() => {
+              navigate('/admin/presupuestos');
+              onClose?.();
+            }}
+            sx={{
+              justifyContent: collapsed ? 'center' : 'flex-start',
+              px: collapsed ? 1 : 2,
+            }}
+          >
+            <ListItemIcon sx={{ minWidth: 0, mr: collapsed ? 0 : 2 }}>
+              <RequestQuoteIcon />
+            </ListItemIcon>
+
+            {!collapsed && <ListItemText primary="Presupuestos" />}
+          </ListItemButton>
+        </Tooltip>
+        <Tooltip
+          title="Emisores"
+          placement="right"
+          disableHoverListener={!collapsed}
+        >
+          <ListItemButton
+            onClick={() => {
+              navigate('/admin/emisores');
+              onClose?.();
+            }}
+            sx={{
+              justifyContent: collapsed ? 'center' : 'flex-start',
+              px: collapsed ? 1 : 2,
+            }}
+          >
+            <ListItemIcon sx={{ minWidth: 0, mr: collapsed ? 0 : 2 }}>
+              <PeopleIcon />
+            </ListItemIcon>
+
+            {!collapsed && <ListItemText primary="Emisores" />}
+          </ListItemButton>
+        </Tooltip>
+        <Tooltip title="Series" placement="right" disableHoverListener={!collapsed}>
+          <ListItemButton
+            onClick={() => {
+              navigate('/admin/series');
+              onClose?.();
+            }}
+            sx={{
+              justifyContent: collapsed ? 'center' : 'flex-start',
+              px: collapsed ? 1 : 2,
+            }}
+          >
+            <ListItemIcon sx={{ minWidth: 0, mr: collapsed ? 0 : 2 }}>
+              <FormatListNumberedIcon />
+            </ListItemIcon>
+
+            {!collapsed && <ListItemText primary="Series" />}
+          </ListItemButton>
+        </Tooltip>
+        <Tooltip
+          title="Textos de documentos"
+          placement="right"
+          disableHoverListener={!collapsed}
+        >
+          <ListItemButton
+            onClick={() => {
+              navigate('/admin/documento-textos');
+              onClose?.();
+            }}
+            sx={{
+              justifyContent: collapsed ? 'center' : 'flex-start',
+              px: collapsed ? 1 : 2,
+            }}
+          >
+            <ListItemIcon sx={{ minWidth: 0, mr: collapsed ? 0 : 2 }}>
+              <RequestQuoteIcon />
+            </ListItemIcon>
+
+            {!collapsed && <ListItemText primary="Textos de documentos" />}
+          </ListItemButton>
+        </Tooltip>
+
+
+
       </List>
     </>
   );

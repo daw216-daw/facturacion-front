@@ -1,9 +1,3 @@
-// import api from '../../../lib/api';
-
-// export async function getClientes() {
-//   const response = await api.get('/clientes');
-//   return response.data.data;
-// }
 import api from '../../../lib/api';
 
 /**
@@ -63,4 +57,11 @@ export async function reactivateCliente(id) {
     activo: true,
   });
   return response.data.data;
+}
+
+export async function getClientesSelect() {
+  const response = await api.get('/clientes', {
+    params: { solo_activos: true },
+  });
+  return response.data.data ?? response.data;
 }
