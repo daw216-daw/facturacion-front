@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { useParams } from 'react-router-dom';
+import { useNavigate, useParams } from 'react-router-dom';
 import {
   Box,
   Typography,
@@ -7,44 +7,192 @@ import {
   Paper,
   CircularProgress,
   Grid,
+  Button,
+  Stack,
+  Snackbar,
+  Alert,
 } from '@mui/material';
-import { getPresupuestoPreview } from '../services/presupuestos.service';
+import {
+  getPresupuestoPreview,
+  getPresupuestoPdf,
+  sendPresupuestoEmail,
+  getPresupuestoWhatsappLink,
+} from '../services/presupuestos.service';
 import dayjs from 'dayjs';
-import { useNavigate } from 'react-router-dom';
 import ArrowBackIcon from '@mui/icons-material/ArrowBack';
-import { Button } from '@mui/material';
+import PictureAsPdfIcon from '@mui/icons-material/PictureAsPdf';
+import DownloadIcon from '@mui/icons-material/Download';
+import EmailIcon from '@mui/icons-material/Email';
+import WhatsAppIcon from '@mui/icons-material/WhatsApp';
 
 
 export default function PresupuestoPreview() {
   const { id } = useParams();
   const [data, setData] = useState(null);
   const [loading, setLoading] = useState(true);
+  const [pdfLoading, setPdfLoading] = useState(false);
+  const [shareLoading, setShareLoading] = useState(false);
+  const [feedback, setFeedback] = useState({
+    open: false,
+    severity: 'success',
+    message: '',
+  });
   const navigate = useNavigate();
 
+  const loadPreview = async () => {
+    const response = await getPresupuestoPreview(id);
+    setData(response);
+    return response;
+  };
 
   useEffect(() => {
-    getPresupuestoPreview(id)
-      .then(setData)
-      .finally(() => setLoading(false));
+    loadPreview().finally(() => setLoading(false));
   }, [id]);
+
+  const showFeedback = (message, severity = 'success') => {
+    setFeedback({
+      open: true,
+      severity,
+      message,
+    });
+  };
+
+  const handleCloseFeedback = (_, reason) => {
+    if (reason === 'clickaway') return;
+
+    setFeedback((prev) => ({
+      ...prev,
+      open: false,
+    }));
+  };
 
   if (loading) return <CircularProgress />;
   if (!data) return <Typography>Error al cargar el documento</Typography>;
 
   const { documento, cliente, emisor, texto_legal } = data;
 
+  const handlePdf = async (download = false) => {
+    try {
+      setPdfLoading(true);
+
+      const blob = await getPresupuestoPdf(id, { download });
+      const pdfUrl = window.URL.createObjectURL(
+        new Blob([blob], { type: 'application/pdf' })
+      );
+
+      if (download) {
+        const link = document.createElement('a');
+        link.href = pdfUrl;
+        link.download = `presupuesto-${documento.numero}-${documento.anio}.pdf`;
+        document.body.appendChild(link);
+        link.click();
+        link.remove();
+      } else {
+        window.open(pdfUrl, '_blank', 'noopener,noreferrer');
+      }
+
+      window.setTimeout(() => window.URL.revokeObjectURL(pdfUrl), 60000);
+    } catch (error) {
+      console.error(error);
+      showFeedback('No se pudo generar el PDF del presupuesto', 'error');
+    } finally {
+      setPdfLoading(false);
+    }
+  };
+
+  const handleShare = async (channel) => {
+    try {
+      setShareLoading(true);
+
+      if (channel === 'email') {
+        const response = await sendPresupuestoEmail(id);
+        showFeedback(
+          response.message || 'Presupuesto enviado por email correctamente'
+        );
+      }
+
+      if (channel === 'whatsapp') {
+        const response = await getPresupuestoWhatsappLink(id);
+        window.open(response.whatsapp_url, '_blank', 'noopener,noreferrer');
+      }
+
+      await loadPreview();
+    } catch (error) {
+      console.error(error);
+      showFeedback(
+        error.response?.data?.message ||
+          'No se pudo compartir el presupuesto',
+        'error'
+      );
+    } finally {
+      setShareLoading(false);
+    }
+  };
+
   return (
- <>
-      <Box sx={{ maxWidth: 900, mx: 'auto', mb: 2 }}>
-  <Button
-    startIcon={<ArrowBackIcon />}
-    onClick={() => navigate('/admin/presupuestos')}
-  >
-    Volver a presupuestos
-  </Button>
-</Box>
-    
-    <Paper sx={{ p: 4, maxWidth: 900, mx: 'auto' }}>
+    <>
+      <Box
+        sx={{
+          maxWidth: 900,
+          mx: 'auto',
+          mb: 2,
+          display: 'flex',
+          justifyContent: 'space-between',
+          alignItems: 'center',
+          gap: 1,
+          flexWrap: 'wrap',
+        }}
+      >
+        <Button
+          startIcon={<ArrowBackIcon />}
+          onClick={() => navigate('/admin/presupuestos')}
+        >
+          Volver a presupuestos
+        </Button>
+
+        <Stack direction="row" spacing={1} flexWrap="wrap">
+          <Button
+            variant="outlined"
+            startIcon={<PictureAsPdfIcon />}
+            onClick={() => handlePdf(false)}
+            disabled={pdfLoading || shareLoading}
+          >
+            Ver PDF
+          </Button>
+
+          <Button
+            variant="contained"
+            color="error"
+            startIcon={<DownloadIcon />}
+            onClick={() => handlePdf(true)}
+            disabled={pdfLoading || shareLoading}
+          >
+            Descargar PDF
+          </Button>
+
+          <Button
+            variant="outlined"
+            color="primary"
+            startIcon={<EmailIcon />}
+            onClick={() => handleShare('email')}
+            disabled={pdfLoading || shareLoading}
+          >
+            Enviar email
+          </Button>
+
+          <Button
+            variant="contained"
+            color="success"
+            startIcon={<WhatsAppIcon />}
+            onClick={() => handleShare('whatsapp')}
+            disabled={pdfLoading || shareLoading}
+          >
+            WhatsApp
+          </Button>
+        </Stack>
+      </Box>
+
+      <Paper sx={{ p: 4, maxWidth: 900, mx: 'auto' }}>
       {/* ───────────── CABECERA ───────────── */}
  
 
@@ -147,7 +295,22 @@ export default function PresupuestoPreview() {
         />
       )}
     </Paper>
-  </>
+
+      <Snackbar
+        open={feedback.open}
+        autoHideDuration={4000}
+        onClose={handleCloseFeedback}
+        anchorOrigin={{ vertical: 'top', horizontal: 'center' }}
+      >
+        <Alert
+          onClose={handleCloseFeedback}
+          severity={feedback.severity}
+          variant="filled"
+          sx={{ width: '100%' }}
+        >
+          {feedback.message}
+        </Alert>
+      </Snackbar>
+    </>
   );
- 
 }

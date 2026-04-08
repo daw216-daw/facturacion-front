@@ -6,6 +6,25 @@ export async function getPresupuestoPreview(id) {
   return response.data;
 }
 
+export async function getPresupuestoPdf(id, { download = false } = {}) {
+  const response = await api.get(`/presupuestos/${id}/pdf`, {
+    params: download ? { download: 1 } : {},
+    responseType: 'blob',
+  });
+
+  return response.data;
+}
+
+export async function sendPresupuestoEmail(id, data = {}) {
+  const response = await api.post(`/presupuestos/${id}/enviar-email`, data);
+  return response.data;
+}
+
+export async function getPresupuestoWhatsappLink(id, data = {}) {
+  const response = await api.post(`/presupuestos/${id}/compartir-whatsapp`, data);
+  return response.data;
+}
+
 /**
  * Obtener presupuestos (listado)
  */
@@ -26,6 +45,21 @@ export async function getPresupuestos(params = {}) {
  */
 export async function enviarPresupuesto(id) {
   const response = await api.post(`/presupuestos/${id}/enviar`);
+  return response.data;
+}
+
+export async function aceptarPresupuesto(id) {
+  const response = await api.post(`/presupuestos/${id}/aceptar`);
+  return response.data;
+}
+
+export async function rechazarPresupuesto(id) {
+  const response = await api.post(`/presupuestos/${id}/rechazar`);
+  return response.data;
+}
+
+export async function desactivarPresupuesto(id) {
+  const response = await api.post(`/presupuestos/${id}/desactivar`);
   return response.data;
 }
 

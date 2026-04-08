@@ -11,6 +11,7 @@ import {
 import DashboardIcon from '@mui/icons-material/Dashboard';
 import PeopleIcon from '@mui/icons-material/People';
 import RequestQuoteIcon from '@mui/icons-material/RequestQuote';
+import ReceiptLongIcon from '@mui/icons-material/ReceiptLong';
 import FormatListNumberedIcon from '@mui/icons-material/FormatListNumbered';
 
 
@@ -108,6 +109,28 @@ export default function AdminSidebar({
             </ListItemIcon>
 
             {!collapsed && <ListItemText primary="Presupuestos" />}
+          </ListItemButton>
+        </Tooltip>
+        <Tooltip
+          title="Facturas"
+          placement="right"
+          disableHoverListener={!collapsed}
+        >
+          <ListItemButton
+            onClick={() => {
+              navigate('/admin/facturas');
+              onClose?.();
+            }}
+            sx={{
+              justifyContent: collapsed ? 'center' : 'flex-start',
+              px: collapsed ? 1 : 2,
+            }}
+          >
+            <ListItemIcon sx={{ minWidth: 0, mr: collapsed ? 0 : 2 }}>
+              <ReceiptLongIcon />
+            </ListItemIcon>
+
+            {!collapsed && <ListItemText primary="Facturas" />}
           </ListItemButton>
         </Tooltip>
         <Tooltip

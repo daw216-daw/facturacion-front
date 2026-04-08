@@ -10,6 +10,12 @@ import {
   IconButton,
   Chip,
   Button,
+  Dialog,
+  DialogTitle,
+  DialogContent,
+  DialogActions,
+  Snackbar,
+  Alert,
 } from '@mui/material';
 import dayjs from 'dayjs';
 
@@ -18,9 +24,22 @@ import VisibilityIcon from '@mui/icons-material/Visibility';
 import SendIcon from '@mui/icons-material/Send';
 import ReceiptIcon from '@mui/icons-material/Receipt';
 import EditIcon from '@mui/icons-material/Edit';
+import EmailIcon from '@mui/icons-material/Email';
+import WhatsAppIcon from '@mui/icons-material/WhatsApp';
+import CheckCircleIcon from '@mui/icons-material/CheckCircle';
+import CancelIcon from '@mui/icons-material/Cancel';
+import BlockIcon from '@mui/icons-material/Block';
 
-
-import { getPresupuestos, enviarPresupuesto, facturarPresupuesto } from '../services/presupuestos.service';
+import {
+  getPresupuestos,
+  enviarPresupuesto,
+  aceptarPresupuesto,
+  rechazarPresupuesto,
+  desactivarPresupuesto,
+  facturarPresupuesto,
+  sendPresupuestoEmail,
+  getPresupuestoWhatsappLink,
+} from '../services/presupuestos.service';
 import ConfirmActionDialog from '../../../common/ConfirmActionDialog';
 import PresupuestoForm from './PresupuestoForm';
 
@@ -30,10 +49,17 @@ export default function PresupuestosPage() {
   const [loading, setLoading] = useState(true);
 
   const [selected, setSelected] = useState(null);
-  const [action, setAction] = useState(null); // enviar | facturar
+  const [action, setAction] = useState(null); // enviar | aceptar | rechazar | desactivar | facturar
   const [processing, setProcessing] = useState(false);
   const [openForm, setOpenForm] = useState(false);
   const [selectedPresupuesto, setSelectedPresupuesto] = useState(null);
+  const [shareTarget, setShareTarget] = useState(null);
+  const [shareLoading, setShareLoading] = useState(false);
+  const [feedback, setFeedback] = useState({
+    open: false,
+    severity: 'success',
+    message: '',
+  });
 
 
   const theme = useTheme();
@@ -54,6 +80,60 @@ export default function PresupuestosPage() {
     loadPresupuestos();
   }, []);
 
+  const actionConfig = {
+    enviar: {
+      title: 'Enviar presupuesto',
+      description: '¿Deseas marcar este presupuesto como enviado y luego compartir su PDF?',
+      confirmText: 'Enviar',
+      confirmColor: 'primary',
+    },
+    aceptar: {
+      title: 'Aceptar presupuesto',
+      description: '¿Deseas marcar este presupuesto como aceptado para poder facturarlo?',
+      confirmText: 'Aceptar',
+      confirmColor: 'success',
+    },
+    rechazar: {
+      title: 'Rechazar presupuesto',
+      description: '¿Deseas marcar este presupuesto como rechazado para revisarlo y permitir su edición?',
+      confirmText: 'Rechazar',
+      confirmColor: 'error',
+    },
+    desactivar: {
+      title: 'Desactivar presupuesto',
+      description: '¿Deseas desactivar este presupuesto? Quedará cerrado y ya no se podrá compartir ni facturar.',
+      confirmText: 'Desactivar',
+      confirmColor: 'warning',
+    },
+    facturar: {
+      title: 'Facturar presupuesto',
+      description: '¿Deseas convertir este presupuesto en factura?',
+      confirmText: 'Facturar',
+      confirmColor: 'success',
+    },
+  };
+
+  const currentActionConfig = action
+    ? actionConfig[action]
+    : actionConfig.enviar;
+
+  const showFeedback = (message, severity = 'success') => {
+    setFeedback({
+      open: true,
+      severity,
+      message,
+    });
+  };
+
+  const handleCloseFeedback = (_, reason) => {
+    if (reason === 'clickaway') return;
+
+    setFeedback((prev) => ({
+      ...prev,
+      open: false,
+    }));
+  };
+
   const handleConfirmAction = async () => {
     if (!selected) return;
 
@@ -62,20 +142,71 @@ export default function PresupuestosPage() {
 
       if (action === 'enviar') {
         await enviarPresupuesto(selected.id);
+        setShareTarget(selected);
+      }
+
+      if (action === 'aceptar') {
+        await aceptarPresupuesto(selected.id);
+        showFeedback('Presupuesto aceptado correctamente');
+      }
+
+      if (action === 'rechazar') {
+        await rechazarPresupuesto(selected.id);
+        showFeedback('Presupuesto rechazado correctamente');
+      }
+
+      if (action === 'desactivar') {
+        await desactivarPresupuesto(selected.id);
+        showFeedback('Presupuesto desactivado correctamente', 'info');
       }
 
       if (action === 'facturar') {
         await facturarPresupuesto(selected.id);
+        showFeedback('Factura generada correctamente');
       }
 
       loadPresupuestos();
     } catch (e) {
       console.error(e);
-      alert('Error al procesar el presupuesto');
+      showFeedback(
+        e.response?.data?.message || 'Error al procesar el presupuesto',
+        'error'
+      );
     } finally {
       setProcessing(false);
       setSelected(null);
       setAction(null);
+    }
+  };
+
+  const handleShare = async (channel) => {
+    if (!shareTarget) return;
+
+    try {
+      setShareLoading(true);
+
+      if (channel === 'email') {
+        const response = await sendPresupuestoEmail(shareTarget.id);
+        showFeedback(
+          response.message || 'Presupuesto enviado por email correctamente'
+        );
+      }
+
+      if (channel === 'whatsapp') {
+        const response = await getPresupuestoWhatsappLink(shareTarget.id);
+        window.open(response.whatsapp_url, '_blank', 'noopener,noreferrer');
+      }
+
+      loadPresupuestos();
+    } catch (e) {
+      console.error(e);
+      showFeedback(
+        e.response?.data?.message ||
+          'No se pudo compartir el presupuesto',
+        'error'
+      );
+    } finally {
+      setShareLoading(false);
     }
   };
 
@@ -141,7 +272,9 @@ export default function PresupuestosPage() {
                 ? 'info'
                 : params.value === 'aceptado'
                   ? 'success'
-                  : 'error'
+                  : params.value === 'rechazado'
+                    ? 'error'
+                    : 'warning'
           }
         />
       ),
@@ -149,7 +282,7 @@ export default function PresupuestosPage() {
     {
       field: 'actions',
       headerName: '',
-      width: 160,
+      width: 240,
       sortable: false,
       renderCell: (params) => (
         <>
@@ -163,8 +296,8 @@ export default function PresupuestosPage() {
             <VisibilityIcon />
           </IconButton>
 
-          {/* EDITAR (solo borrador) */}
-          {params.row.estado === 'borrador' && (
+          {/* EDITAR (borrador o rechazado) */}
+          {(params.row.estado === 'borrador' || params.row.estado === 'rechazado') && (
             <IconButton
               size="small"
               color="warning"
@@ -177,17 +310,49 @@ export default function PresupuestosPage() {
             </IconButton>
           )}
 
-          {/* ENVIAR */}
-          {params.row.estado === 'borrador' && (
+          {/* ENVIAR / REENVIAR / COMPARTIR */}
+          {['borrador', 'rechazado', 'enviado', 'aceptado'].includes(params.row.estado) && (
             <IconButton
               size="small"
               color="primary"
               onClick={() => {
-                setSelected(params.row);
-                setAction('enviar');
+                if (params.row.estado === 'borrador' || params.row.estado === 'rechazado') {
+                  setSelected(params.row);
+                  setAction('enviar');
+                  return;
+                }
+
+                setShareTarget(params.row);
               }}
             >
               <SendIcon />
+            </IconButton>
+          )}
+
+          {/* ACEPTAR / RECHAZAR */}
+          {params.row.estado === 'enviado' && (
+            <IconButton
+              size="small"
+              color="success"
+              onClick={() => {
+                setSelected(params.row);
+                setAction('aceptar');
+              }}
+            >
+              <CheckCircleIcon />
+            </IconButton>
+          )}
+
+          {params.row.estado === 'enviado' && (
+            <IconButton
+              size="small"
+              color="error"
+              onClick={() => {
+                setSelected(params.row);
+                setAction('rechazar');
+              }}
+            >
+              <CancelIcon />
             </IconButton>
           )}
 
@@ -202,6 +367,20 @@ export default function PresupuestosPage() {
               }}
             >
               <ReceiptIcon />
+            </IconButton>
+          )}
+
+          {/* DESACTIVAR */}
+          {params.row.estado !== 'desactivado' && !params.row.factura && (
+            <IconButton
+              size="small"
+              color="inherit"
+              onClick={() => {
+                setSelected(params.row);
+                setAction('desactivar');
+              }}
+            >
+              <BlockIcon />
             </IconButton>
           )}
         </>
@@ -255,7 +434,7 @@ export default function PresupuestosPage() {
               <Typography>{p.total} €</Typography>
               <Chip size="small" label={p.estado} sx={{ mt: 1 }} />
 
-              <Stack direction="row" justifyContent="flex-end">
+              <Stack direction="row" justifyContent="flex-end" flexWrap="wrap">
                 <IconButton
                   size="small"
                   onClick={() =>
@@ -264,6 +443,88 @@ export default function PresupuestosPage() {
                 >
                   <VisibilityIcon />
                 </IconButton>
+
+                {(p.estado === 'borrador' || p.estado === 'rechazado') && (
+                  <IconButton
+                    size="small"
+                    color="warning"
+                    onClick={() => {
+                      setSelectedPresupuesto(p);
+                      setOpenForm(true);
+                    }}
+                  >
+                    <EditIcon />
+                  </IconButton>
+                )}
+
+                {['borrador', 'rechazado', 'enviado', 'aceptado'].includes(p.estado) && (
+                  <IconButton
+                    size="small"
+                    color="primary"
+                    onClick={() => {
+                      if (p.estado === 'borrador' || p.estado === 'rechazado') {
+                        setSelected(p);
+                        setAction('enviar');
+                        return;
+                      }
+
+                      setShareTarget(p);
+                    }}
+                  >
+                    <SendIcon />
+                  </IconButton>
+                )}
+
+                {p.estado === 'enviado' && (
+                  <IconButton
+                    size="small"
+                    color="success"
+                    onClick={() => {
+                      setSelected(p);
+                      setAction('aceptar');
+                    }}
+                  >
+                    <CheckCircleIcon />
+                  </IconButton>
+                )}
+
+                {p.estado === 'enviado' && (
+                  <IconButton
+                    size="small"
+                    color="error"
+                    onClick={() => {
+                      setSelected(p);
+                      setAction('rechazar');
+                    }}
+                  >
+                    <CancelIcon />
+                  </IconButton>
+                )}
+
+                {p.estado === 'aceptado' && (
+                  <IconButton
+                    size="small"
+                    color="success"
+                    onClick={() => {
+                      setSelected(p);
+                      setAction('facturar');
+                    }}
+                  >
+                    <ReceiptIcon />
+                  </IconButton>
+                )}
+
+                {p.estado !== 'desactivado' && !p.factura && (
+                  <IconButton
+                    size="small"
+                    onClick={() => {
+                      setSelected(p);
+                      setAction('desactivar');
+                    }}
+                  >
+                    <BlockIcon />
+                  </IconButton>
+                )}
               </Stack>
             </Box>
           ))}
@@ -289,30 +550,91 @@ export default function PresupuestosPage() {
       <ConfirmActionDialog
         open={!!action}
         loading={processing}
-        title={
-          action === 'enviar'
-            ? 'Enviar presupuesto'
-            : 'Facturar presupuesto'
-        }
-        description={
-          action === 'enviar'
-            ? '¿Deseas enviar este presupuesto al cliente?'
-            : '¿Deseas convertir este presupuesto en factura?'
-        }
-        confirmText={action === 'enviar' ? 'Enviar' : 'Facturar'}
-        confirmColor={action === 'enviar' ? 'primary' : 'success'}
+        title={currentActionConfig.title}
+        description={currentActionConfig.description}
+        confirmText={currentActionConfig.confirmText}
+        confirmColor={currentActionConfig.confirmColor}
         onClose={() => {
           setSelected(null);
           setAction(null);
         }}
         onConfirm={handleConfirmAction}
       />
+
+      <Dialog
+        open={!!shareTarget}
+        onClose={() => !shareLoading && setShareTarget(null)}
+      >
+        <DialogTitle>Compartir presupuesto</DialogTitle>
+
+        <DialogContent>
+          <Typography sx={{ mb: 1.5 }}>
+            El presupuesto ya está listo para compartirse. ¿Cómo quieres enviar el PDF?
+          </Typography>
+
+          {shareTarget?.cliente?.email && (
+            <Typography variant="body2">
+              Email cliente: {shareTarget.cliente.email}
+            </Typography>
+          )}
+
+          {shareTarget?.cliente?.telefono && (
+            <Typography variant="body2">
+              Teléfono cliente: {shareTarget.cliente.telefono}
+            </Typography>
+          )}
+        </DialogContent>
+
+        <DialogActions>
+          <Button
+            onClick={() => setShareTarget(null)}
+            disabled={shareLoading}
+          >
+            Cerrar
+          </Button>
+
+          <Button
+            startIcon={<EmailIcon />}
+            onClick={() => handleShare('email')}
+            disabled={shareLoading}
+          >
+            Enviar email
+          </Button>
+
+          <Button
+            variant="contained"
+            color="success"
+            startIcon={<WhatsAppIcon />}
+            onClick={() => handleShare('whatsapp')}
+            disabled={shareLoading}
+          >
+            WhatsApp
+          </Button>
+        </DialogActions>
+      </Dialog>
+
       <PresupuestoForm
         open={openForm}
         presupuesto={selectedPresupuesto}
         onClose={() => setOpenForm(false)}
         onSaved={loadPresupuestos}
       />
+
+      <Snackbar
+        open={feedback.open}
+        autoHideDuration={4000}
+        onClose={handleCloseFeedback}
+        anchorOrigin={{ vertical: 'top', horizontal: 'right' }}
+      >
+        <Alert
+          onClose={handleCloseFeedback}
+          severity={feedback.severity}
+          variant="filled"
+          sx={{ width: '100%' }}
+        >
+          {feedback.message}
+        </Alert>
+      </Snackbar>
 
     </Box>
 
