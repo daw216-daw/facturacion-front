@@ -88,3 +88,4 @@ export async function updatePresupuesto(id, data) {
   const response = await api.put(`/presupuestos/${id}`, data);
   return response.data;
 }
+

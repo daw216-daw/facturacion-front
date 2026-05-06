@@ -42,7 +42,7 @@ export default function PresupuestoForm({
   const [clientes, setClientes] = useState([]);
   const [emisores, setEmisores] = useState([]);
   const [docsDisponibles, setDocsDisponibles] = useState([]);
-  const [docsSeleccionados, setDocsSeleccionados] = useState([]); // [{id, contenido, titulo}] en orden
+  const [docsSeleccionados, setDocsSeleccionados] = useState([]);
   const [saving, setSaving] = useState(false);
 
   const [form, setForm] = useState({
@@ -54,7 +54,6 @@ export default function PresupuestoForm({
     observaciones: '',
   });
 
-  /* ───────────── CARGA ───────────── */
   useEffect(() => {
     if (!open) return;
 
@@ -63,7 +62,6 @@ export default function PresupuestoForm({
     getDocumentoTextos({ tipo: 'presupuesto', activos: true }).then(setDocsDisponibles);
 
     if (presupuesto) {
-      // Fetch full data to get documento_textos con su orden
       getPresupuesto(presupuesto.id).then((full) => {
         setForm({
           cliente_id: full.cliente_id,
@@ -80,22 +78,13 @@ export default function PresupuestoForm({
         setDocsSeleccionados(seleccionados);
       });
     } else {
-      setForm({
-        cliente_id: '',
-        emisor_id: '',
-        fecha: '',
-        total: '',
-        descripcion: '',
-        observaciones: '',
-      });
+      setForm({ cliente_id: '', emisor_id: '', fecha: '', total: '', descripcion: '', observaciones: '' });
       setDocsSeleccionados([]);
     }
   }, [open, presupuesto]);
 
-  const handleChange = (e) =>
-    setForm({ ...form, [e.target.name]: e.target.value });
+  const handleChange = (e) => setForm({ ...form, [e.target.name]: e.target.value });
 
-  /* ───────────── GESTIÓN DOCUMENTOS ───────────── */
   const isSelected = (doc) => docsSeleccionados.some((d) => d.id === doc.id);
 
   const toggleDoc = (doc) => {
@@ -124,11 +113,9 @@ export default function PresupuestoForm({
     });
   };
 
-  /* ───────────── GUARDAR ───────────── */
   const handleSubmit = async () => {
     try {
       setSaving(true);
-
       const payload = {
         ...form,
         documento_texto_ids: docsSeleccionados.map((d) => d.id),
@@ -150,7 +137,6 @@ export default function PresupuestoForm({
     }
   };
 
-  /* ───────────── TÍTULO PREVIEW ───────────── */
   const getTituloDoc = (doc) => {
     const match = doc.contenido?.match(/<strong>(.*?)<\/strong>/);
     return match ? match[1] : `Documento #${doc.id}`;
@@ -161,149 +147,137 @@ export default function PresupuestoForm({
       open={open}
       onClose={onClose}
       fullScreen={fullScreen}
-      maxWidth="lg"
+      maxWidth="md"
       fullWidth
     >
-      <DialogTitle>
+      <DialogTitle sx={{ borderBottom: 1, borderColor: 'divider', pb: 2 }}>
         {presupuesto ? 'Editar presupuesto' : 'Nuevo presupuesto'}
       </DialogTitle>
 
-      <DialogContent dividers>
-        <Grid container spacing={3}>
+      <DialogContent sx={{ pt: 3 }}>
+        <Stack spacing={3}>
 
-          {/* ───────────── DATOS GENERALES ───────────── */}
-          <Grid item xs={12}>
-            <Paper variant="outlined" sx={{ p: 3 }}>
-              <Typography variant="subtitle1" fontWeight={600} mb={2}>
-                Datos generales
-              </Typography>
+          {/* DATOS GENERALES */}
+          <Paper variant="outlined" sx={{ p: 2.5 }}>
+            <Typography variant="subtitle2" fontWeight={600} mb={2} color="text.secondary" textTransform="uppercase" letterSpacing={0.5}>
+              Datos generales
+            </Typography>
 
-              <Grid container spacing={2}>
-                <Grid item xs={12} sm={6} md={4}>
-                  <TextField
-                    select
-                    fullWidth
-                    label="Emisor"
-                    name="emisor_id"
-                    value={form.emisor_id}
-                    onChange={handleChange}
-                    required
-                  >
-                    {emisores.map((e) => (
-                      <MenuItem key={e.id} value={e.id}>
-                        {e.nombre}
-                      </MenuItem>
-                    ))}
-                  </TextField>
-                </Grid>
-
-                <Grid item xs={12} sm={6} md={4}>
-                  <TextField
-                    select
-                    fullWidth
-                    label="Cliente"
-                    name="cliente_id"
-                    value={form.cliente_id}
-                    onChange={handleChange}
-                    required
-                  >
-                    {clientes.map((c) => (
-                      <MenuItem key={c.id} value={c.id}>
-                        {c.nombre}
-                      </MenuItem>
-                    ))}
-                  </TextField>
-                </Grid>
-
-                <Grid item xs={12} sm={6} md={2}>
-                  <TextField
-                    fullWidth
-                    type="date"
-                    label="Fecha"
-                    name="fecha"
-                    InputLabelProps={{ shrink: true }}
-                    value={form.fecha}
-                    onChange={handleChange}
-                    required
-                  />
-                </Grid>
-
-                <Grid item xs={12} sm={6} md={2}>
-                  <TextField
-                    fullWidth
-                    type="number"
-                    label="Total (€)"
-                    name="total"
-                    value={form.total}
-                    onChange={handleChange}
-                    required
-                  />
-                </Grid>
-
-                {presupuesto && (
-                  <Grid item xs={12} sm={6} md={3}>
-                    <TextField
-                      fullWidth
-                      label="Estado"
-                      value={presupuesto.estado}
-                      disabled
-                    />
-                  </Grid>
-                )}
+            <Grid container spacing={2}>
+              <Grid size={{ xs: 12, sm: 6 }}>
+                <TextField
+                  select
+                  fullWidth
+                  label="Emisor"
+                  name="emisor_id"
+                  value={form.emisor_id}
+                  onChange={handleChange}
+                  required
+                >
+                  {emisores.map((e) => (
+                    <MenuItem key={e.id} value={e.id}>
+                      {e.nombre}
+                    </MenuItem>
+                  ))}
+                </TextField>
               </Grid>
-            </Paper>
-          </Grid>
 
-          {/* ───────────── DESCRIPCIÓN ───────────── */}
-          <Grid item xs={12}>
-            <Paper variant="outlined" sx={{ p: 3 }}>
-              <Typography variant="subtitle1" fontWeight={600} mb={1}>
-                Descripción / trabajos a realizar
-              </Typography>
+              <Grid size={{ xs: 12, sm: 6 }}>
+                <TextField
+                  select
+                  fullWidth
+                  label="Cliente"
+                  name="cliente_id"
+                  value={form.cliente_id}
+                  onChange={handleChange}
+                  required
+                >
+                  {clientes.map((c) => (
+                    <MenuItem key={c.id} value={c.id}>
+                      {c.nombre}
+                    </MenuItem>
+                  ))}
+                </TextField>
+              </Grid>
 
-              <DocumentoTextoEditor
-                value={form.descripcion}
-                onChange={(html) =>
-                  setForm((prev) => ({ ...prev, descripcion: html }))
-                }
-              />
-            </Paper>
-          </Grid>
+              <Grid size={{ xs: 12, sm: 6 }}>
+                <TextField
+                  fullWidth
+                  type="date"
+                  label="Fecha"
+                  name="fecha"
+                  InputLabelProps={{ shrink: true }}
+                  value={form.fecha}
+                  onChange={handleChange}
+                  required
+                />
+              </Grid>
 
-          {/* ───────────── OBSERVACIONES ───────────── */}
-          <Grid item xs={12}>
-            <Paper variant="outlined" sx={{ p: 3 }}>
-              <Typography variant="subtitle1" fontWeight={600} mb={1}>
-                Observaciones internas
-              </Typography>
+              <Grid size={{ xs: 12, sm: 6 }}>
+                <TextField
+                  fullWidth
+                  type="number"
+                  label="Total (€)"
+                  name="total"
+                  value={form.total}
+                  onChange={handleChange}
+                  required
+                  inputProps={{ min: 0, step: '0.01' }}
+                />
+              </Grid>
 
-              <DocumentoTextoEditor
-                value={form.observaciones}
-                onChange={(html) =>
-                  setForm((prev) => ({ ...prev, observaciones: html }))
-                }
-              />
-            </Paper>
-          </Grid>
-
-          {/* ───────────── TEXTOS LEGALES ───────────── */}
-          <Grid item xs={12}>
-            <Paper variant="outlined" sx={{ p: 3 }}>
-              <Typography variant="subtitle1" fontWeight={600} mb={1}>
-                Textos legales del documento
-              </Typography>
-              <Typography variant="body2" color="text.secondary" mb={2}>
-                Selecciona los textos que aparecerán en el PDF y ordénalos con las flechas.
-              </Typography>
-
-              {docsDisponibles.length === 0 && (
-                <Typography variant="body2" color="text.secondary">
-                  No hay textos legales activos para presupuestos.
-                </Typography>
+              {presupuesto && (
+                <Grid size={{ xs: 12, sm: 6 }}>
+                  <TextField
+                    fullWidth
+                    label="Estado"
+                    value={presupuesto.estado}
+                    disabled
+                  />
+                </Grid>
               )}
+            </Grid>
+          </Paper>
 
-              {/* SELECTOR: checkboxes de docs disponibles */}
-              <Stack spacing={1} mb={docsSeleccionados.length > 0 ? 2 : 0}>
+          {/* DESCRIPCIÓN */}
+          <Paper variant="outlined" sx={{ p: 2.5 }}>
+            <Typography variant="subtitle2" fontWeight={600} mb={2} color="text.secondary" textTransform="uppercase" letterSpacing={0.5}>
+              Descripción / trabajos a realizar
+            </Typography>
+
+            <DocumentoTextoEditor
+              value={form.descripcion}
+              onChange={(html) => setForm((prev) => ({ ...prev, descripcion: html }))}
+            />
+          </Paper>
+
+          {/* OBSERVACIONES */}
+          <Paper variant="outlined" sx={{ p: 2.5 }}>
+            <Typography variant="subtitle2" fontWeight={600} mb={2} color="text.secondary" textTransform="uppercase" letterSpacing={0.5}>
+              Observaciones internas
+            </Typography>
+
+            <DocumentoTextoEditor
+              value={form.observaciones}
+              onChange={(html) => setForm((prev) => ({ ...prev, observaciones: html }))}
+            />
+          </Paper>
+
+          {/* TEXTOS LEGALES */}
+          <Paper variant="outlined" sx={{ p: 2.5 }}>
+            <Typography variant="subtitle2" fontWeight={600} mb={0.5} color="text.secondary" textTransform="uppercase" letterSpacing={0.5}>
+              Textos legales del documento
+            </Typography>
+            <Typography variant="body2" color="text.secondary" mb={2}>
+              Selecciona los textos que aparecerán en el PDF y ordénalos con las flechas.
+            </Typography>
+
+            {docsDisponibles.length === 0 ? (
+              <Typography variant="body2" color="text.secondary">
+                No hay textos legales activos para presupuestos.
+              </Typography>
+            ) : (
+              <Stack spacing={0.5}>
                 {docsDisponibles.map((doc) => (
                   <FormControlLabel
                     key={doc.id}
@@ -317,12 +291,7 @@ export default function PresupuestoForm({
                     label={
                       <Typography variant="body2">
                         {getTituloDoc(doc)}
-                        <Typography
-                          component="span"
-                          variant="caption"
-                          color="text.secondary"
-                          ml={1}
-                        >
+                        <Typography component="span" variant="caption" color="text.secondary" ml={1}>
                           (ID #{doc.id})
                         </Typography>
                       </Typography>
@@ -330,65 +299,52 @@ export default function PresupuestoForm({
                   />
                 ))}
               </Stack>
+            )}
 
-              {/* ORDEN: lista de seleccionados con flechas */}
-              {docsSeleccionados.length > 0 && (
-                <>
-                  <Divider sx={{ my: 2 }} />
-                  <Typography variant="body2" fontWeight={600} mb={1}>
-                    Orden en el PDF:
-                  </Typography>
-                  <Stack spacing={1}>
-                    {docsSeleccionados.map((doc, index) => (
-                      <Box
-                        key={doc.id}
-                        sx={{
-                          display: 'flex',
-                          alignItems: 'center',
-                          gap: 1,
-                          p: 1,
-                          border: '1px solid',
-                          borderColor: 'divider',
-                          borderRadius: 1,
-                          bgcolor: 'action.hover',
-                        }}
-                      >
-                        <Typography
-                          variant="body2"
-                          color="text.secondary"
-                          sx={{ minWidth: 24, textAlign: 'center' }}
-                        >
-                          {index + 1}.
-                        </Typography>
-                        <Typography variant="body2" sx={{ flex: 1 }}>
-                          {getTituloDoc(doc)}
-                        </Typography>
-                        <IconButton
-                          size="small"
-                          onClick={() => moverArriba(index)}
-                          disabled={index === 0}
-                        >
-                          <ArrowUpwardIcon fontSize="small" />
-                        </IconButton>
-                        <IconButton
-                          size="small"
-                          onClick={() => moverAbajo(index)}
-                          disabled={index === docsSeleccionados.length - 1}
-                        >
-                          <ArrowDownwardIcon fontSize="small" />
-                        </IconButton>
-                      </Box>
-                    ))}
-                  </Stack>
-                </>
-              )}
-            </Paper>
-          </Grid>
+            {docsSeleccionados.length > 0 && (
+              <>
+                <Divider sx={{ my: 2 }} />
+                <Typography variant="body2" fontWeight={600} mb={1}>
+                  Orden en el PDF:
+                </Typography>
+                <Stack spacing={1}>
+                  {docsSeleccionados.map((doc, index) => (
+                    <Box
+                      key={doc.id}
+                      sx={{
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: 1,
+                        p: 1,
+                        border: '1px solid',
+                        borderColor: 'divider',
+                        borderRadius: 1,
+                        bgcolor: 'action.hover',
+                      }}
+                    >
+                      <Typography variant="body2" color="text.secondary" sx={{ minWidth: 24, textAlign: 'center' }}>
+                        {index + 1}.
+                      </Typography>
+                      <Typography variant="body2" sx={{ flex: 1 }}>
+                        {getTituloDoc(doc)}
+                      </Typography>
+                      <IconButton size="small" onClick={() => moverArriba(index)} disabled={index === 0}>
+                        <ArrowUpwardIcon fontSize="small" />
+                      </IconButton>
+                      <IconButton size="small" onClick={() => moverAbajo(index)} disabled={index === docsSeleccionados.length - 1}>
+                        <ArrowDownwardIcon fontSize="small" />
+                      </IconButton>
+                    </Box>
+                  ))}
+                </Stack>
+              </>
+            )}
+          </Paper>
 
-        </Grid>
+        </Stack>
       </DialogContent>
 
-      <DialogActions sx={{ px: 3, py: 2 }}>
+      <DialogActions sx={{ px: 3, py: 2, borderTop: 1, borderColor: 'divider' }}>
         <Button onClick={onClose} disabled={saving}>
           Cancelar
         </Button>
