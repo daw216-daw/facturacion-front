@@ -1,58 +1,165 @@
 import { useEffect, useState } from 'react';
+import { DataGrid } from '@mui/x-data-grid';
 import {
   Box,
   Typography,
   Button,
-  Grid,
+  Chip,
+  IconButton,
+  Tooltip,
+  useTheme,
+  useMediaQuery,
+  Stack,
   Card,
   CardContent,
-  Chip,
-  Stack,
+  CardActions,
   Divider,
 } from '@mui/material';
 
 import AddIcon from '@mui/icons-material/Add';
 import EditIcon from '@mui/icons-material/Edit';
+import CheckCircleOutlineIcon from '@mui/icons-material/CheckCircleOutline';
+import CancelOutlinedIcon from '@mui/icons-material/CancelOutlined';
 
 import { getDocumentoTextos } from '../services/documentoTextos.service';
 import DocumentoTextoForm from '../components/DocumentoTextoForm';
 
-function getChipColor(tipo) {
-  return tipo === 'presupuesto' ? 'primary' : 'success';
+function stripHtml(html) {
+  return html?.replace(/<[^>]*>/g, ' ').replace(/\s+/g, ' ').trim() || '';
 }
 
-function getTipoLabel(tipo) {
-  return tipo === 'presupuesto'
-    ? 'Texto legal de presupuesto'
-    : 'Texto legal de factura';
+function TipoChip({ tipo }) {
+  return (
+    <Chip
+      label={tipo === 'presupuesto' ? 'Presupuesto' : 'Factura'}
+      color={tipo === 'presupuesto' ? 'primary' : 'success'}
+      size="small"
+      variant="outlined"
+    />
+  );
+}
+
+function ActivoChip({ activo }) {
+  return activo ? (
+    <Chip
+      icon={<CheckCircleOutlineIcon />}
+      label="Activo"
+      color="success"
+      size="small"
+      variant="filled"
+    />
+  ) : (
+    <Chip
+      icon={<CancelOutlinedIcon />}
+      label="Inactivo"
+      color="default"
+      size="small"
+      variant="outlined"
+    />
+  );
 }
 
 export default function DocumentoTextosPage() {
   const [rows, setRows] = useState([]);
   const [selected, setSelected] = useState(null);
+  const [loading, setLoading] = useState(true);
+
+  const theme = useTheme();
+  const isMobile = useMediaQuery(theme.breakpoints.down('md'));
 
   const loadData = async () => {
-    const data = await getDocumentoTextos();
-    setRows(data);
+    setLoading(true);
+    try {
+      const data = await getDocumentoTextos();
+      setRows(data);
+    } finally {
+      setLoading(false);
+    }
   };
 
   useEffect(() => {
     loadData();
   }, []);
 
+  const columns = [
+    {
+      field: 'id',
+      headerName: '#',
+      width: 60,
+      renderCell: (params) => (
+        <Typography variant="body2" color="text.secondary">
+          #{params.value}
+        </Typography>
+      ),
+    },
+    {
+      field: 'tipo',
+      headerName: 'Tipo',
+      width: 140,
+      renderCell: (params) => <TipoChip tipo={params.value} />,
+    },
+    {
+      field: 'contenido',
+      headerName: 'Contenido',
+      flex: 1,
+      sortable: false,
+      renderCell: (params) => (
+        <Tooltip title={stripHtml(params.value).slice(0, 200)} placement="top">
+          <Typography
+            variant="body2"
+            color="text.secondary"
+            sx={{
+              overflow: 'hidden',
+              textOverflow: 'ellipsis',
+              whiteSpace: 'nowrap',
+              maxWidth: '100%',
+            }}
+          >
+            {stripHtml(params.value) || '—'}
+          </Typography>
+        </Tooltip>
+      ),
+    },
+    {
+      field: 'activo',
+      headerName: 'Estado',
+      width: 120,
+      renderCell: (params) => <ActivoChip activo={params.value} />,
+    },
+    {
+      field: 'actions',
+      headerName: '',
+      width: 80,
+      sortable: false,
+      renderCell: (params) => (
+        <Tooltip title="Editar">
+          <IconButton
+            size="small"
+            color="primary"
+            onClick={() => setSelected(params.row)}
+          >
+            <EditIcon fontSize="small" />
+          </IconButton>
+        </Tooltip>
+      ),
+    },
+  ];
+
   return (
-    <Box sx={{ maxWidth: 1200, mx: 'auto' }}>
+    <Box sx={{ width: '100%' }}>
       {/* HEADER */}
       <Box
         sx={{
-          mb: 4,
+          mb: 3,
           display: 'flex',
           justifyContent: 'space-between',
-          alignItems: 'center',
+          alignItems: 'flex-start',
+          flexWrap: 'wrap',
+          gap: 2,
         }}
       >
         <Box>
-          <Typography variant="h4" fontWeight={600}>
+          <Typography variant="h5" fontWeight={600}>
             Textos legales
           </Typography>
           <Typography variant="body2" color="text.secondary">
@@ -63,108 +170,63 @@ export default function DocumentoTextosPage() {
         <Button
           variant="contained"
           startIcon={<AddIcon />}
-          onClick={() =>
-            setSelected({
-              tipo: 'presupuesto',
-              contenido: '',
-            })
-          }
+          onClick={() => setSelected({ tipo: 'presupuesto', contenido: '', activo: true })}
         >
           Nuevo texto legal
         </Button>
       </Box>
 
-      {/* LISTADO */}
-      <Grid container spacing={3}>
-        {rows.map((item) => (
-          <Grid item xs={12} md={6} key={item.id}>
-            <Card
-              variant="outlined"
-              sx={{
-                height: '100%',
-                display: 'flex',
-                flexDirection: 'column',
-              }}
-            >
-              <CardContent sx={{ flexGrow: 1 }}>
-                {/* CABECERA CARD */}
-                <Stack
-                  direction="row"
-                  justifyContent="space-between"
-                  alignItems="center"
-                  mb={2}
-                >
-                  <Box>
-                    <Typography fontWeight={600}>
-                      {getTipoLabel(item.tipo)}
-                    </Typography>
-                    <Typography variant="caption" color="text.secondary">
-                      ID #{item.id}
-                    </Typography>
-                  </Box>
+      {/* DESKTOP — DataGrid */}
+      {!isMobile && (
+        <DataGrid
+          rows={rows}
+          columns={columns}
+          loading={loading}
+          autoHeight
+          disableRowSelectionOnClick
+          pageSizeOptions={[10, 25]}
+          initialState={{ pagination: { paginationModel: { pageSize: 10 } } }}
+          sx={{
+            '& .MuiDataGrid-cell': { alignItems: 'center' },
+            '& .MuiDataGrid-row:hover': { cursor: 'default' },
+          }}
+        />
+      )}
 
-                  <Chip
-                    label={item.tipo.toUpperCase()}
-                    color={getChipColor(item.tipo)}
-                    size="small"
-                  />
+      {/* MOBILE — Cards */}
+      {isMobile && (
+        <Stack spacing={2}>
+          {rows.map((item) => (
+            <Card key={item.id} variant="outlined">
+              <CardContent sx={{ pb: 1 }}>
+                <Stack direction="row" justifyContent="space-between" alignItems="center" mb={1}>
+                  <Stack direction="row" spacing={1}>
+                    <TipoChip tipo={item.tipo} />
+                    <ActivoChip activo={item.activo} />
+                  </Stack>
+                  <Typography variant="caption" color="text.secondary">
+                    #{item.id}
+                  </Typography>
                 </Stack>
 
-                {/* PREVIEW */}
-                <Box
+                <Typography
+                  variant="body2"
+                  color="text.secondary"
                   sx={{
-                    p: 2,
-                    borderRadius: 1,
-                    backgroundColor: 'background.default',
-                    maxHeight: 140,
+                    mt: 1,
+                    display: '-webkit-box',
+                    WebkitLineClamp: 2,
+                    WebkitBoxOrient: 'vertical',
                     overflow: 'hidden',
-                    position: 'relative',
                   }}
                 >
-                  <Box
-                    sx={{
-                      fontSize: '0.9rem',
-                      lineHeight: 1.5,
-                      '& h1, & h2': {
-                        fontSize: '1rem',
-                        fontWeight: 600,
-                        mb: 1,
-                      },
-                      '& p': {
-                        mb: 1,
-                        color: 'text.secondary',
-                      },
-                    }}
-                    dangerouslySetInnerHTML={{
-                      __html: item.contenido || '<em>Sin contenido</em>',
-                    }}
-                  />
-
-                  {/* FADE */}
-                  <Box
-                    sx={{
-                      position: 'absolute',
-                      bottom: 0,
-                      left: 0,
-                      right: 0,
-                      height: 40,
-                      background:
-                        'linear-gradient(transparent, rgba(255,255,255,0.95))',
-                    }}
-                  />
-                </Box>
+                  {stripHtml(item.contenido) || '—'}
+                </Typography>
               </CardContent>
 
               <Divider />
 
-              {/* ACCIONES */}
-              <Box
-                sx={{
-                  p: 2,
-                  display: 'flex',
-                  justifyContent: 'flex-end',
-                }}
-              >
+              <CardActions sx={{ justifyContent: 'flex-end', px: 2 }}>
                 <Button
                   size="small"
                   startIcon={<EditIcon />}
@@ -172,13 +234,13 @@ export default function DocumentoTextosPage() {
                 >
                   Editar
                 </Button>
-              </Box>
+              </CardActions>
             </Card>
-          </Grid>
-        ))}
-      </Grid>
+          ))}
+        </Stack>
+      )}
 
-      {/* MODAL CREATE / EDIT */}
+      {/* MODAL */}
       {selected && (
         <DocumentoTextoForm
           texto={selected}

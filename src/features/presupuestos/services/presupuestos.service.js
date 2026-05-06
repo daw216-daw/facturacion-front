@@ -71,6 +71,11 @@ export async function facturarPresupuesto(id) {
   return response.data;
 }
 
+export async function getPresupuesto(id) {
+  const response = await api.get(`/presupuestos/${id}`);
+  return response.data;
+}
+
 export async function createPresupuesto(data) {
   const response = await api.post('/presupuestos', data);
   return response.data.data ?? response.data;

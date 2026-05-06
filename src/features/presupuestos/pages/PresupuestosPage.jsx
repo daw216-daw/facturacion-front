@@ -16,6 +16,7 @@ import {
   DialogActions,
   Snackbar,
   Alert,
+  Tooltip,
 } from '@mui/material';
 import dayjs from 'dayjs';
 
@@ -287,101 +288,117 @@ export default function PresupuestosPage() {
       renderCell: (params) => (
         <>
           {/* PREVIEW */}
-          <IconButton
-            size="small"
-            onClick={() =>
-              navigate(`/admin/presupuestos/${params.row.id}/preview`)
-            }
-          >
-            <VisibilityIcon />
-          </IconButton>
+          <Tooltip title="Ver detalle">
+            <IconButton
+              size="small"
+              onClick={() => navigate(`/admin/presupuestos/${params.row.id}/preview`)}
+            >
+              <VisibilityIcon />
+            </IconButton>
+          </Tooltip>
 
           {/* EDITAR (borrador o rechazado) */}
           {(params.row.estado === 'borrador' || params.row.estado === 'rechazado') && (
-            <IconButton
-              size="small"
-              color="warning"
-              onClick={() => {
-                setSelectedPresupuesto(params.row);
-                setOpenForm(true);
-              }}
-            >
-              <EditIcon />
-            </IconButton>
+            <Tooltip title="Editar presupuesto">
+              <IconButton
+                size="small"
+                color="warning"
+                onClick={() => {
+                  setSelectedPresupuesto(params.row);
+                  setOpenForm(true);
+                }}
+              >
+                <EditIcon />
+              </IconButton>
+            </Tooltip>
           )}
 
-          {/* ENVIAR / REENVIAR / COMPARTIR */}
+          {/* ENVIAR / COMPARTIR */}
           {['borrador', 'rechazado', 'enviado', 'aceptado'].includes(params.row.estado) && (
-            <IconButton
-              size="small"
-              color="primary"
-              onClick={() => {
-                if (params.row.estado === 'borrador' || params.row.estado === 'rechazado') {
+            <Tooltip title={
+              params.row.estado === 'borrador' || params.row.estado === 'rechazado'
+                ? 'Enviar presupuesto'
+                : 'Compartir (email / WhatsApp)'
+            }>
+              <IconButton
+                size="small"
+                color="primary"
+                onClick={() => {
+                  if (params.row.estado === 'borrador' || params.row.estado === 'rechazado') {
+                    setSelected(params.row);
+                    setAction('enviar');
+                    return;
+                  }
+                  setShareTarget(params.row);
+                }}
+              >
+                <SendIcon />
+              </IconButton>
+            </Tooltip>
+          )}
+
+          {/* ACEPTAR */}
+          {params.row.estado === 'enviado' && (
+            <Tooltip title="Aceptar presupuesto">
+              <IconButton
+                size="small"
+                color="success"
+                onClick={() => {
                   setSelected(params.row);
-                  setAction('enviar');
-                  return;
-                }
-
-                setShareTarget(params.row);
-              }}
-            >
-              <SendIcon />
-            </IconButton>
+                  setAction('aceptar');
+                }}
+              >
+                <CheckCircleIcon />
+              </IconButton>
+            </Tooltip>
           )}
 
-          {/* ACEPTAR / RECHAZAR */}
+          {/* RECHAZAR */}
           {params.row.estado === 'enviado' && (
-            <IconButton
-              size="small"
-              color="success"
-              onClick={() => {
-                setSelected(params.row);
-                setAction('aceptar');
-              }}
-            >
-              <CheckCircleIcon />
-            </IconButton>
-          )}
-
-          {params.row.estado === 'enviado' && (
-            <IconButton
-              size="small"
-              color="error"
-              onClick={() => {
-                setSelected(params.row);
-                setAction('rechazar');
-              }}
-            >
-              <CancelIcon />
-            </IconButton>
+            <Tooltip title="Rechazar presupuesto">
+              <IconButton
+                size="small"
+                color="error"
+                onClick={() => {
+                  setSelected(params.row);
+                  setAction('rechazar');
+                }}
+              >
+                <CancelIcon />
+              </IconButton>
+            </Tooltip>
           )}
 
           {/* FACTURAR */}
           {params.row.estado === 'aceptado' && (
-            <IconButton
-              size="small"
-              color="success"
-              onClick={() => {
-                setSelected(params.row);
-                setAction('facturar');
-              }}
-            >
-              <ReceiptIcon />
-            </IconButton>
+            <Tooltip title="Convertir en factura">
+              <IconButton
+                size="small"
+                color="success"
+                onClick={() => {
+                  setSelected(params.row);
+                  setAction('facturar');
+                }}
+              >
+                <ReceiptIcon />
+              </IconButton>
+            </Tooltip>
           )}
 
           {/* DESACTIVAR */}
           {params.row.estado !== 'desactivado' && !params.row.factura && (
-            <IconButton
-              size="small"
-              color="inherit"
-              onClick={() => {
-                setSelected(params.row);
-                setAction('desactivar');
-              }}
-            >
-              <BlockIcon />
-            </IconButton>
+            <Tooltip title="Desactivar presupuesto">
+              <IconButton
+                size="small"
+                color="inherit"
+                onClick={() => {
+                  setSelected(params.row);
+                  setAction('desactivar');
+                }}
+              >
+                <BlockIcon />
+              </IconButton>
+            </Tooltip>
           )}
         </>
       ),
@@ -435,95 +452,110 @@ export default function PresupuestosPage() {
               <Chip size="small" label={p.estado} sx={{ mt: 1 }} />
 
               <Stack direction="row" justifyContent="flex-end" flexWrap="wrap">
-                <IconButton
-                  size="small"
-                  onClick={() =>
-                    navigate(`/admin/presupuestos/${p.id}/preview`)
-                  }
-                >
-                  <VisibilityIcon />
-                </IconButton>
-
-                {(p.estado === 'borrador' || p.estado === 'rechazado') && (
+                <Tooltip title="Ver detalle">
                   <IconButton
                     size="small"
-                    color="warning"
-                    onClick={() => {
-                      setSelectedPresupuesto(p);
-                      setOpenForm(true);
-                    }}
+                    onClick={() => navigate(`/admin/presupuestos/${p.id}/preview`)}
                   >
-                    <EditIcon />
+                    <VisibilityIcon />
                   </IconButton>
+                </Tooltip>
+
+                {(p.estado === 'borrador' || p.estado === 'rechazado') && (
+                  <Tooltip title="Editar presupuesto">
+                    <IconButton
+                      size="small"
+                      color="warning"
+                      onClick={() => {
+                        setSelectedPresupuesto(p);
+                        setOpenForm(true);
+                      }}
+                    >
+                      <EditIcon />
+                    </IconButton>
+                  </Tooltip>
                 )}
 
                 {['borrador', 'rechazado', 'enviado', 'aceptado'].includes(p.estado) && (
-                  <IconButton
-                    size="small"
-                    color="primary"
-                    onClick={() => {
-                      if (p.estado === 'borrador' || p.estado === 'rechazado') {
+                  <Tooltip title={
+                    p.estado === 'borrador' || p.estado === 'rechazado'
+                      ? 'Enviar presupuesto'
+                      : 'Compartir (email / WhatsApp)'
+                  }>
+                    <IconButton
+                      size="small"
+                      color="primary"
+                      onClick={() => {
+                        if (p.estado === 'borrador' || p.estado === 'rechazado') {
+                          setSelected(p);
+                          setAction('enviar');
+                          return;
+                        }
+                        setShareTarget(p);
+                      }}
+                    >
+                      <SendIcon />
+                    </IconButton>
+                  </Tooltip>
+                )}
+
+                {p.estado === 'enviado' && (
+                  <Tooltip title="Aceptar presupuesto">
+                    <IconButton
+                      size="small"
+                      color="success"
+                      onClick={() => {
                         setSelected(p);
-                        setAction('enviar');
-                        return;
-                      }
-
-                      setShareTarget(p);
-                    }}
-                  >
-                    <SendIcon />
-                  </IconButton>
+                        setAction('aceptar');
+                      }}
+                    >
+                      <CheckCircleIcon />
+                    </IconButton>
+                  </Tooltip>
                 )}
 
                 {p.estado === 'enviado' && (
-                  <IconButton
-                    size="small"
-                    color="success"
-                    onClick={() => {
-                      setSelected(p);
-                      setAction('aceptar');
-                    }}
-                  >
-                    <CheckCircleIcon />
-                  </IconButton>
-                )}
-
-                {p.estado === 'enviado' && (
-                  <IconButton
-                    size="small"
-                    color="error"
-                    onClick={() => {
-                      setSelected(p);
-                      setAction('rechazar');
-                    }}
-                  >
-                    <CancelIcon />
-                  </IconButton>
+                  <Tooltip title="Rechazar presupuesto">
+                    <IconButton
+                      size="small"
+                      color="error"
+                      onClick={() => {
+                        setSelected(p);
+                        setAction('rechazar');
+                      }}
+                    >
+                      <CancelIcon />
+                    </IconButton>
+                  </Tooltip>
                 )}
 
                 {p.estado === 'aceptado' && (
-                  <IconButton
-                    size="small"
-                    color="success"
-                    onClick={() => {
-                      setSelected(p);
-                      setAction('facturar');
-                    }}
-                  >
-                    <ReceiptIcon />
-                  </IconButton>
+                  <Tooltip title="Convertir en factura">
+                    <IconButton
+                      size="small"
+                      color="success"
+                      onClick={() => {
+                        setSelected(p);
+                        setAction('facturar');
+                      }}
+                    >
+                      <ReceiptIcon />
+                    </IconButton>
+                  </Tooltip>
                 )}
 
                 {p.estado !== 'desactivado' && !p.factura && (
-                  <IconButton
-                    size="small"
-                    onClick={() => {
-                      setSelected(p);
-                      setAction('desactivar');
-                    }}
-                  >
-                    <BlockIcon />
-                  </IconButton>
+                  <Tooltip title="Desactivar presupuesto">
+                    <IconButton
+                      size="small"
+                      onClick={() => {
+                        setSelected(p);
+                        setAction('desactivar');
+                      }}
+                    >
+                      <BlockIcon />
+                    </IconButton>
+                  </Tooltip>
                 )}
               </Stack>
             </Box>

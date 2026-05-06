@@ -1,8 +1,8 @@
 
 import api from '../../../lib/api';
 
-export async function getDocumentoTextos() {
-  const res = await api.get('/documento-textos');
+export async function getDocumentoTextos(params = {}) {
+  const res = await api.get('/documento-textos', { params });
   return res.data;
 }
 

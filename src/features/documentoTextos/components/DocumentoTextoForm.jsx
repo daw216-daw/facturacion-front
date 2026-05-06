@@ -10,6 +10,8 @@ import {
   Box,
   TextField,
   MenuItem,
+  FormControlLabel,
+  Switch,
 } from '@mui/material';
 
 import DocumentoTextoEditor from '../../../common/DocumentoTextoEditor';
@@ -24,30 +26,23 @@ export default function DocumentoTextoForm({ texto, onClose, onSaved }) {
 
   const [tipo, setTipo] = useState(texto?.tipo || 'presupuesto');
   const [contenido, setContenido] = useState(texto?.contenido || '');
+  const [activo, setActivo] = useState(texto?.activo ?? true);
   const [saving, setSaving] = useState(false);
 
-  /* ─────────────────────────────
-     Sincronizar al cambiar registro
-     ───────────────────────────── */
   useEffect(() => {
     setTipo(texto?.tipo || 'presupuesto');
     setContenido(texto?.contenido || '');
+    setActivo(texto?.activo ?? true);
   }, [texto]);
 
-  /* ─────────────────────────────
-     Guardar (CREATE / UPDATE)
-     ───────────────────────────── */
   const handleSave = async () => {
     try {
       setSaving(true);
 
       if (isEdit) {
-        await updateDocumentoTexto(texto.id, { contenido });
+        await updateDocumentoTexto(texto.id, { contenido, activo });
       } else {
-        await createDocumentoTexto({
-          tipo,
-          contenido,
-        });
+        await createDocumentoTexto({ tipo, contenido, activo });
       }
 
       onSaved();
@@ -67,24 +62,33 @@ export default function DocumentoTextoForm({ texto, onClose, onSaved }) {
       </DialogTitle>
 
       <DialogContent dividers>
-        {/* ───────────── TIPO ───────────── */}
-        <Box mb={3}>
+        {/* ───────────── TIPO + ACTIVO ───────────── */}
+        <Box mb={3} sx={{ display: 'flex', gap: 2, alignItems: 'flex-start', flexWrap: 'wrap' }}>
           <TextField
             select
-            fullWidth
             label="Tipo de documento"
             value={tipo}
             onChange={(e) => setTipo(e.target.value)}
             disabled={isEdit}
-            helperText={
-              isEdit
-                ? 'El tipo no se puede modificar'
-                : 'Selecciona dónde se usará este texto'
-            }
+            helperText={isEdit ? 'El tipo no se puede modificar' : 'Dónde se usará este texto'}
+            sx={{ flex: 1, minWidth: 200 }}
           >
             <MenuItem value="presupuesto">Presupuesto</MenuItem>
             <MenuItem value="factura">Factura</MenuItem>
           </TextField>
+
+          <Box sx={{ pt: 1 }}>
+            <FormControlLabel
+              control={
+                <Switch
+                  checked={activo}
+                  onChange={(e) => setActivo(e.target.checked)}
+                  color="success"
+                />
+              }
+              label={activo ? 'Activo' : 'Inactivo'}
+            />
+          </Box>
         </Box>
 
         {/* ───────────── EDITOR ───────────── */}

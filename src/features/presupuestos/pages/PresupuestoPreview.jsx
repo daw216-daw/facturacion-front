@@ -69,7 +69,7 @@ export default function PresupuestoPreview() {
   if (loading) return <CircularProgress />;
   if (!data) return <Typography>Error al cargar el documento</Typography>;
 
-  const { documento, cliente, emisor, texto_legal } = data;
+  const { documento, cliente, emisor, textos_legales = [] } = data;
 
   const handlePdf = async (download = false) => {
     try {
@@ -287,13 +287,14 @@ export default function PresupuestoPreview() {
         </>
       )}
 
-      {/* ───────────── TEXTO LEGAL ───────────── */}
-      {texto_legal?.trim() && (
+      {/* ───────────── TEXTOS LEGALES ───────────── */}
+      {textos_legales.map((texto, i) => (
         <Box
-          sx={{ mt: 4, fontSize: 14 }}
-          dangerouslySetInnerHTML={{ __html: texto_legal }}
+          key={i}
+          sx={{ mt: 3, p: 2, border: '1px solid', borderColor: 'divider', borderRadius: 1, fontSize: 14 }}
+          dangerouslySetInnerHTML={{ __html: texto }}
         />
-      )}
+      ))}
     </Paper>
 
       <Snackbar

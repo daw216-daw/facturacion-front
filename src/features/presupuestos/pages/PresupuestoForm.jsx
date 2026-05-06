@@ -14,13 +14,20 @@ import {
   useMediaQuery,
   Typography,
   Box,
-  Divider,
   Paper,
+  Checkbox,
+  FormControlLabel,
+  IconButton,
+  Stack,
+  Divider,
 } from '@mui/material';
+import ArrowUpwardIcon from '@mui/icons-material/ArrowUpward';
+import ArrowDownwardIcon from '@mui/icons-material/ArrowDownward';
 
-import { createPresupuesto, updatePresupuesto } from '../services/presupuestos.service';
+import { createPresupuesto, updatePresupuesto, getPresupuesto } from '../services/presupuestos.service';
 import { getClientesSelect } from '../../clientes/services/clientes.service';
 import { getEmisores } from '../../emisores/services/emisores.service';
+import { getDocumentoTextos } from '../../documentoTextos/services/documentoTextos.service';
 import DocumentoTextoEditor from '../../../common/DocumentoTextoEditor';
 
 export default function PresupuestoForm({
@@ -34,6 +41,8 @@ export default function PresupuestoForm({
 
   const [clientes, setClientes] = useState([]);
   const [emisores, setEmisores] = useState([]);
+  const [docsDisponibles, setDocsDisponibles] = useState([]);
+  const [docsSeleccionados, setDocsSeleccionados] = useState([]); // [{id, contenido, titulo}] en orden
   const [saving, setSaving] = useState(false);
 
   const [form, setForm] = useState({
@@ -51,33 +60,84 @@ export default function PresupuestoForm({
 
     getClientesSelect().then(setClientes);
     getEmisores().then(setEmisores);
+    getDocumentoTextos({ tipo: 'presupuesto', activos: true }).then(setDocsDisponibles);
 
     if (presupuesto) {
-      setForm({
-        cliente_id: presupuesto.cliente_id,
-        emisor_id: presupuesto.emisor_id,
-        fecha: presupuesto.fecha
-          ? dayjs(presupuesto.fecha).format('YYYY-MM-DD')
-          : '',
-        total: presupuesto.total,
-        descripcion: presupuesto.descripcion || '',
-        observaciones: presupuesto.observaciones || '',
+      // Fetch full data to get documento_textos con su orden
+      getPresupuesto(presupuesto.id).then((full) => {
+        setForm({
+          cliente_id: full.cliente_id,
+          emisor_id: full.emisor_id,
+          fecha: full.fecha ? dayjs(full.fecha).format('YYYY-MM-DD') : '',
+          total: full.total,
+          descripcion: full.descripcion || '',
+          observaciones: full.observaciones || '',
+        });
+
+        const seleccionados = (full.documento_textos ?? [])
+          .slice()
+          .sort((a, b) => (a.pivot?.orden ?? 0) - (b.pivot?.orden ?? 0));
+        setDocsSeleccionados(seleccionados);
       });
+    } else {
+      setForm({
+        cliente_id: '',
+        emisor_id: '',
+        fecha: '',
+        total: '',
+        descripcion: '',
+        observaciones: '',
+      });
+      setDocsSeleccionados([]);
     }
   }, [open, presupuesto]);
 
   const handleChange = (e) =>
     setForm({ ...form, [e.target.name]: e.target.value });
 
+  /* ───────────── GESTIÓN DOCUMENTOS ───────────── */
+  const isSelected = (doc) => docsSeleccionados.some((d) => d.id === doc.id);
+
+  const toggleDoc = (doc) => {
+    if (isSelected(doc)) {
+      setDocsSeleccionados((prev) => prev.filter((d) => d.id !== doc.id));
+    } else {
+      setDocsSeleccionados((prev) => [...prev, doc]);
+    }
+  };
+
+  const moverArriba = (index) => {
+    if (index === 0) return;
+    setDocsSeleccionados((prev) => {
+      const arr = [...prev];
+      [arr[index - 1], arr[index]] = [arr[index], arr[index - 1]];
+      return arr;
+    });
+  };
+
+  const moverAbajo = (index) => {
+    setDocsSeleccionados((prev) => {
+      if (index >= prev.length - 1) return prev;
+      const arr = [...prev];
+      [arr[index], arr[index + 1]] = [arr[index + 1], arr[index]];
+      return arr;
+    });
+  };
+
   /* ───────────── GUARDAR ───────────── */
   const handleSubmit = async () => {
     try {
       setSaving(true);
 
+      const payload = {
+        ...form,
+        documento_texto_ids: docsSeleccionados.map((d) => d.id),
+      };
+
       if (presupuesto) {
-        await updatePresupuesto(presupuesto.id, form);
+        await updatePresupuesto(presupuesto.id, payload);
       } else {
-        await createPresupuesto(form);
+        await createPresupuesto(payload);
       }
 
       onSaved?.();
@@ -88,6 +148,12 @@ export default function PresupuestoForm({
     } finally {
       setSaving(false);
     }
+  };
+
+  /* ───────────── TÍTULO PREVIEW ───────────── */
+  const getTituloDoc = (doc) => {
+    const match = doc.contenido?.match(/<strong>(.*?)<\/strong>/);
+    return match ? match[1] : `Documento #${doc.id}`;
   };
 
   return (
@@ -174,7 +240,6 @@ export default function PresupuestoForm({
                   />
                 </Grid>
 
-                {/* ESTADO (SOLO LECTURA EN EDICIÓN) */}
                 {presupuesto && (
                   <Grid item xs={12} sm={6} md={3}>
                     <TextField
@@ -218,6 +283,105 @@ export default function PresupuestoForm({
                   setForm((prev) => ({ ...prev, observaciones: html }))
                 }
               />
+            </Paper>
+          </Grid>
+
+          {/* ───────────── TEXTOS LEGALES ───────────── */}
+          <Grid item xs={12}>
+            <Paper variant="outlined" sx={{ p: 3 }}>
+              <Typography variant="subtitle1" fontWeight={600} mb={1}>
+                Textos legales del documento
+              </Typography>
+              <Typography variant="body2" color="text.secondary" mb={2}>
+                Selecciona los textos que aparecerán en el PDF y ordénalos con las flechas.
+              </Typography>
+
+              {docsDisponibles.length === 0 && (
+                <Typography variant="body2" color="text.secondary">
+                  No hay textos legales activos para presupuestos.
+                </Typography>
+              )}
+
+              {/* SELECTOR: checkboxes de docs disponibles */}
+              <Stack spacing={1} mb={docsSeleccionados.length > 0 ? 2 : 0}>
+                {docsDisponibles.map((doc) => (
+                  <FormControlLabel
+                    key={doc.id}
+                    control={
+                      <Checkbox
+                        checked={isSelected(doc)}
+                        onChange={() => toggleDoc(doc)}
+                        size="small"
+                      />
+                    }
+                    label={
+                      <Typography variant="body2">
+                        {getTituloDoc(doc)}
+                        <Typography
+                          component="span"
+                          variant="caption"
+                          color="text.secondary"
+                          ml={1}
+                        >
+                          (ID #{doc.id})
+                        </Typography>
+                      </Typography>
+                    }
+                  />
+                ))}
+              </Stack>
+
+              {/* ORDEN: lista de seleccionados con flechas */}
+              {docsSeleccionados.length > 0 && (
+                <>
+                  <Divider sx={{ my: 2 }} />
+                  <Typography variant="body2" fontWeight={600} mb={1}>
+                    Orden en el PDF:
+                  </Typography>
+                  <Stack spacing={1}>
+                    {docsSeleccionados.map((doc, index) => (
+                      <Box
+                        key={doc.id}
+                        sx={{
+                          display: 'flex',
+                          alignItems: 'center',
+                          gap: 1,
+                          p: 1,
+                          border: '1px solid',
+                          borderColor: 'divider',
+                          borderRadius: 1,
+                          bgcolor: 'action.hover',
+                        }}
+                      >
+                        <Typography
+                          variant="body2"
+                          color="text.secondary"
+                          sx={{ minWidth: 24, textAlign: 'center' }}
+                        >
+                          {index + 1}.
+                        </Typography>
+                        <Typography variant="body2" sx={{ flex: 1 }}>
+                          {getTituloDoc(doc)}
+                        </Typography>
+                        <IconButton
+                          size="small"
+                          onClick={() => moverArriba(index)}
+                          disabled={index === 0}
+                        >
+                          <ArrowUpwardIcon fontSize="small" />
+                        </IconButton>
+                        <IconButton
+                          size="small"
+                          onClick={() => moverAbajo(index)}
+                          disabled={index === docsSeleccionados.length - 1}
+                        >
+                          <ArrowDownwardIcon fontSize="small" />
+                        </IconButton>
+                      </Box>
+                    ))}
+                  </Stack>
+                </>
+              )}
             </Paper>
           </Grid>
 
