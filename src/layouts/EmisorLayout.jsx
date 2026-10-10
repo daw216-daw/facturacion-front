@@ -31,8 +31,8 @@ export default function EmisorLayout() {
         </Toolbar>
       </AppBar>
 
-      <Box sx={{ p: 4 }}>
-        <Typography variant="h4" gutterBottom>
+      <Box sx={{ p: { xs: 2, sm: 3, md: 4 } }}>
+        <Typography variant="h4" gutterBottom sx={{ fontSize: { xs: '1.5rem', sm: '2.125rem' } }}>
           Bienvenido{user?.name ? `, ${user.name}` : ''}
         </Typography>
 

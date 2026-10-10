@@ -1,0 +1,213 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1700 1240" width="1700" height="1240" font-family="Segoe UI, Roboto, Helvetica, Arial, sans-serif">
+<defs>
+  <marker id="punta" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+    <path d="M0,0 L10,5 L0,10 z" fill="#6b7280"/>
+  </marker>
+  <linearGradient id="cab" x1="0" y1="0" x2="1" y2="0">
+    <stop offset="0" stop-color="#1e88e5"/><stop offset="1" stop-color="#0d47a1"/>
+  </linearGradient>
+</defs>
+<rect x="0" y="0" width="1700" height="1240" rx="0" fill="#f3f4f6" stroke="#f3f4f6" stroke-width="0" />
+<rect x="0" y="0" width="1700" height="84" rx="0" fill="url(#cab)" stroke="none" stroke-width="0" />
+<g transform="translate(28,14) scale(0.875)"><rect width="64" height="64" rx="14" fill="#ffffff" opacity=".15"/><path d="M18 11h19l11 11v29a3 3 0 0 1-3 3H18a3 3 0 0 1-3-3V14a3 3 0 0 1 3-3z" fill="#fff"/><path d="M37 11v8a3 3 0 0 0 3 3h8z" fill="#bbdefb"/><rect x="20" y="27" width="20" height="3.5" rx="1.75" fill="#90caf9"/><rect x="20" y="34" width="15" height="3.5" rx="1.75" fill="#90caf9"/><circle cx="46" cy="47" r="12" fill="#2e7d32" stroke="#fff" stroke-width="3"/><text x="46" y="52.5" font-size="15" font-weight="700" fill="#fff" text-anchor="middle">€</text></g>
+<text x="100" y="40" font-size="26" font-weight="800" fill="#ffffff" text-anchor="start">Facturación · Arquitectura de la aplicación</text>
+<text x="100" y="66" font-size="13" font-weight="400" fill="#e3f2fd" text-anchor="start">Versión 1.0 · 10/10/2026 · api-facturacion (Laravel 12) + facturacion-front (React 19) · despliegue: Hostinger (subdominios api. y app.)</text>
+<rect x="24" y="110" width="236" height="700" rx="16" fill="#ffffff" stroke="#455a64" stroke-width="2" />
+<rect x="24" y="110" width="236" height="52" rx="16" fill="#455a64" stroke="#455a64" stroke-width="0" />
+<rect x="24" y="146" width="236" height="16" rx="0" fill="#455a64" stroke="#455a64" stroke-width="0" />
+<text x="42" y="134" font-size="17" font-weight="700" fill="#ffffff" text-anchor="start">Personas</text>
+<text x="42" y="153" font-size="11.5" font-weight="400" fill="#e3f2fd" text-anchor="start">Quién usa la aplicación</text>
+<rect x="40" y="178" width="204" height="108" rx="10" fill="#ffffff" stroke="#d1d5db" stroke-width="1" />
+<rect x="40" y="178" width="5" height="108" rx="2" fill="#1565c0" stroke="#1565c0" stroke-width="0" />
+<text x="54" y="199" font-size="13" font-weight="700" fill="#1565c0" text-anchor="start">Administrador (admin)</text>
+<text x="54" y="218" font-size="12" font-weight="400" fill="#374151" text-anchor="start">Acceso a todo el panel</text>
+<text x="54" y="235" font-size="12" font-weight="400" fill="#374151" text-anchor="start">Crea usuarios, clientes,</text>
+<text x="54" y="252" font-size="12" font-weight="400" fill="#374151" text-anchor="start">presupuestos y facturas</text>
+<text x="54" y="269" font-size="12" font-weight="400" fill="#374151" text-anchor="start">Envía por email / WhatsApp</text>
+<rect x="40" y="300" width="204" height="91" rx="10" fill="#ffffff" stroke="#d1d5db" stroke-width="1" />
+<rect x="40" y="300" width="5" height="91" rx="2" fill="#9e9e9e" stroke="#9e9e9e" stroke-width="0" />
+<text x="54" y="321" font-size="13" font-weight="700" fill="#9e9e9e" text-anchor="start">Emisor (emisor)</text>
+<text x="54" y="340" font-size="12" font-weight="400" fill="#374151" text-anchor="start">Puede iniciar sesión</text>
+<text x="54" y="357" font-size="12" font-weight="400" fill="#374151" text-anchor="start">Panel /emisor vacío</text>
+<text x="54" y="374" font-size="12" font-weight="400" fill="#374151" text-anchor="start">⏳ pendiente (v2)</text>
+<rect x="40" y="405" width="204" height="125" rx="10" fill="#ffffff" stroke="#d1d5db" stroke-width="1" />
+<rect x="40" y="405" width="5" height="125" rx="2" fill="#2e7d32" stroke="#2e7d32" stroke-width="0" />
+<text x="54" y="426" font-size="13" font-weight="700" fill="#2e7d32" text-anchor="start">Cliente final</text>
+<text x="54" y="445" font-size="12" font-weight="400" fill="#374151" text-anchor="start">Recibe el email con el PDF</text>
+<text x="54" y="462" font-size="12" font-weight="400" fill="#374151" text-anchor="start">o el mensaje de WhatsApp</text>
+<text x="54" y="479" font-size="12" font-weight="400" fill="#374151" text-anchor="start">Abre el PDF con un enlace</text>
+<text x="54" y="496" font-size="12" font-weight="400" fill="#374151" text-anchor="start">firmado (válido 7 días)</text>
+<text x="54" y="513" font-size="12" font-weight="400" fill="#374151" text-anchor="start">Responde al email → emisor</text>
+<rect x="40" y="544" width="204" height="125" rx="10" fill="#ffffff" stroke="#d1d5db" stroke-width="1" />
+<rect x="40" y="544" width="5" height="125" rx="2" fill="#6a1b9a" stroke="#6a1b9a" stroke-width="0" />
+<text x="54" y="565" font-size="13" font-weight="700" fill="#6a1b9a" text-anchor="start">Acceso</text>
+<text x="54" y="584" font-size="12" font-weight="400" fill="#374151" text-anchor="start">Login email + contraseña</text>
+<text x="54" y="601" font-size="12" font-weight="400" fill="#374151" text-anchor="start">Token de sesión 12 h</text>
+<text x="54" y="618" font-size="12" font-weight="400" fill="#374151" text-anchor="start">5 intentos/min por email</text>
+<text x="54" y="635" font-size="12" font-weight="400" fill="#374151" text-anchor="start">Usuarios desactivados</text>
+<text x="54" y="652" font-size="12" font-weight="400" fill="#374151" text-anchor="start">no pueden entrar</text>
+<rect x="290" y="110" width="440" height="700" rx="16" fill="#f8fbff" stroke="#1565c0" stroke-width="2" />
+<rect x="290" y="110" width="440" height="52" rx="16" fill="#1565c0" stroke="#1565c0" stroke-width="0" />
+<rect x="290" y="146" width="440" height="16" rx="0" fill="#1565c0" stroke="#1565c0" stroke-width="0" />
+<text x="308" y="134" font-size="17" font-weight="700" fill="#ffffff" text-anchor="start">facturacion-front</text>
+<text x="308" y="153" font-size="11.5" font-weight="400" fill="#e3f2fd" text-anchor="start">React 19 · Vite 7 · MUI 7 · https://app.&lt;dominio&gt;</text>
+<rect x="306" y="178" width="408" height="159" rx="10" fill="#ffffff" stroke="#d1d5db" stroke-width="1" />
+<rect x="306" y="178" width="5" height="159" rx="2" fill="#1565c0" stroke="#1565c0" stroke-width="0" />
+<text x="320" y="199" font-size="13" font-weight="700" fill="#1565c0" text-anchor="start">Pantallas del panel (/admin)</text>
+<text x="320" y="218" font-size="12" font-weight="400" fill="#374151" text-anchor="start">Dashboard ─ conteos, importes, pendiente de cobro</text>
+<text x="320" y="235" font-size="12" font-weight="400" fill="#374151" text-anchor="start">Clientes ─ particular · comunidad · empresa</text>
+<text x="320" y="252" font-size="12" font-weight="400" fill="#374151" text-anchor="start">Presupuestos ─ filtros, búsqueda, vista previa, editar</text>
+<text x="320" y="269" font-size="12" font-weight="400" fill="#374151" text-anchor="start">Facturas ─ desde presupuesto o manual, cobro, editar</text>
+<text x="320" y="286" font-size="12" font-weight="400" fill="#374151" text-anchor="start">Vista de correos ─ el email tal y como lo ve el cliente</text>
+<text x="320" y="303" font-size="12" font-weight="400" fill="#374151" text-anchor="start">Emisores · Series · Textos legales · Usuarios</text>
+<text x="320" y="320" font-size="12" font-weight="400" fill="#374151" text-anchor="start">Login · Sin permisos · Panel emisor (vacío)</text>
+<rect x="306" y="349" width="408" height="125" rx="10" fill="#ffffff" stroke="#d1d5db" stroke-width="1" />
+<rect x="306" y="349" width="5" height="125" rx="2" fill="#0277bd" stroke="#0277bd" stroke-width="0" />
+<text x="320" y="370" font-size="13" font-weight="700" fill="#0277bd" text-anchor="start">Componentes comunes (src/common)</text>
+<text x="320" y="389" font-size="12" font-weight="400" fill="#374151" text-anchor="start">Vistas previas: hoja que imita el PDF + panel interno</text>
+<text x="320" y="406" font-size="12" font-weight="400" fill="#374151" text-anchor="start">ShareDialog ─ email / WhatsApp (solo móviles)</text>
+<text x="320" y="423" font-size="12" font-weight="400" fill="#374151" text-anchor="start">IvaFechaDialog ─ facturar y editar (IVA 21/10/4/0 %)</text>
+<text x="320" y="440" font-size="12" font-weight="400" fill="#374151" text-anchor="start">TextosLegalesSelector · AvisoIvaCero · FormSection</text>
+<text x="320" y="457" font-size="12" font-weight="400" fill="#374151" text-anchor="start">DocumentoTextoEditor (TipTap) · AppLogo · HistorialEnvios</text>
+<rect x="306" y="486" width="408" height="108" rx="10" fill="#ffffff" stroke="#d1d5db" stroke-width="1" />
+<rect x="306" y="486" width="5" height="108" rx="2" fill="#37474f" stroke="#37474f" stroke-width="0" />
+<text x="320" y="507" font-size="13" font-weight="700" fill="#37474f" text-anchor="start">Técnico</text>
+<text x="320" y="526" font-size="12" font-weight="400" fill="#374151" text-anchor="start">Axios con token Bearer · 401 → login con motivo</text>
+<text x="320" y="543" font-size="12" font-weight="400" fill="#374151" text-anchor="start">Tablas DataGrid paginadas en el servidor</text>
+<text x="320" y="560" font-size="12" font-weight="400" fill="#374151" text-anchor="start">Adaptado a móvil, tablet y escritorio · modo oscuro</text>
+<text x="320" y="577" font-size="12" font-weight="400" fill="#374151" text-anchor="start">Build estático (dist/) + .htaccess para la SPA</text>
+<line x1="732" y1="330" x2="770" y2="330" stroke="#1565c0" stroke-width="2" marker-end="url(#punta)" />
+<text x="751" y="312" font-size="11" font-weight="700" fill="#1565c0" text-anchor="middle">HTTPS</text>
+<text x="751" y="352" font-size="11" font-weight="700" fill="#1565c0" text-anchor="middle">JSON</text>
+<rect x="772" y="110" width="500" height="700" rx="16" fill="#f7f8ff" stroke="#283593" stroke-width="2" />
+<rect x="772" y="110" width="500" height="52" rx="16" fill="#283593" stroke="#283593" stroke-width="0" />
+<rect x="772" y="146" width="500" height="16" rx="0" fill="#283593" stroke="#283593" stroke-width="0" />
+<text x="790" y="134" font-size="17" font-weight="700" fill="#ffffff" text-anchor="start">api-facturacion</text>
+<text x="790" y="153" font-size="11.5" font-weight="400" fill="#e3f2fd" text-anchor="start">Laravel 12 · PHP 8.2+ · Sanctum · dompdf · https://api.&lt;dominio&gt;/api</text>
+<rect x="788" y="178" width="468" height="91" rx="10" fill="#ffffff" stroke="#d1d5db" stroke-width="1" />
+<rect x="788" y="178" width="5" height="91" rx="2" fill="#c62828" stroke="#c62828" stroke-width="0" />
+<text x="802" y="199" font-size="13" font-weight="700" fill="#c62828" text-anchor="start">Seguridad</text>
+<text x="802" y="218" font-size="12" font-weight="400" fill="#374151" text-anchor="start">auth:sanctum + activo + role:admin en todo el panel</text>
+<text x="802" y="235" font-size="12" font-weight="400" fill="#374151" text-anchor="start">Throttle en login y en enlaces públicos · CORS por dominio</text>
+<text x="802" y="252" font-size="12" font-weight="400" fill="#374151" text-anchor="start">Mensajes de validación en español · zona Europe/Madrid</text>
+<rect x="788" y="281" width="468" height="125" rx="10" fill="#ffffff" stroke="#d1d5db" stroke-width="1" />
+<rect x="788" y="281" width="5" height="125" rx="2" fill="#283593" stroke="#283593" stroke-width="0" />
+<text x="802" y="302" font-size="13" font-weight="700" fill="#283593" text-anchor="start">Controladores (routes/api.php)</text>
+<text x="802" y="321" font-size="12" font-weight="400" fill="#374151" text-anchor="start">Auth · Dashboard · Clientes · Users · Emisores · Series</text>
+<text x="802" y="338" font-size="12" font-weight="400" fill="#374151" text-anchor="start">Presupuestos ─ CRUD, enviar, aceptar, rechazar, facturar,</text>
+<text x="802" y="355" font-size="12" font-weight="400" fill="#374151" text-anchor="start">   PDF, email, WhatsApp, vista previa, email-preview</text>
+<text x="802" y="372" font-size="12" font-weight="400" fill="#374151" text-anchor="start">Facturas ─ CRUD, pagar, editar, PDF, email, WhatsApp</text>
+<text x="802" y="389" font-size="12" font-weight="400" fill="#374151" text-anchor="start">DocumentoTextos (textos legales con título)</text>
+<rect x="788" y="418" width="468" height="91" rx="10" fill="#ffffff" stroke="#d1d5db" stroke-width="1" />
+<rect x="788" y="418" width="5" height="91" rx="2" fill="#4527a0" stroke="#4527a0" stroke-width="0" />
+<text x="802" y="439" font-size="13" font-weight="700" fill="#4527a0" text-anchor="start">Servicios</text>
+<text x="802" y="458" font-size="12" font-weight="400" fill="#374151" text-anchor="start">SerieService ─ numeración correlativa por año</text>
+<text x="802" y="475" font-size="12" font-weight="400" fill="#374151" text-anchor="start">FacturacionService ─ presupuesto → factura (bloqueo)</text>
+<text x="802" y="492" font-size="12" font-weight="400" fill="#374151" text-anchor="start">EnvioDocumentoService ─ email, WhatsApp e historial</text>
+<rect x="788" y="521" width="468" height="91" rx="10" fill="#ffffff" stroke="#d1d5db" stroke-width="1" />
+<rect x="788" y="521" width="5" height="91" rx="2" fill="#00695c" stroke="#00695c" stroke-width="0" />
+<text x="802" y="542" font-size="13" font-weight="700" fill="#00695c" text-anchor="start">Documentos</text>
+<text x="802" y="561" font-size="12" font-weight="400" fill="#374151" text-anchor="start">PDF A4 (dompdf): presupuesto y factura, emisor al pie</text>
+<text x="802" y="578" font-size="12" font-weight="400" fill="#374151" text-anchor="start">Email DocumentoEnviadoMail: HTML + texto, PDF adjunto</text>
+<text x="802" y="595" font-size="12" font-weight="400" fill="#374151" text-anchor="start">Factura guarda copia congelada de emisor/cliente/textos</text>
+<rect x="788" y="624" width="468" height="91" rx="10" fill="#ffffff" stroke="#d1d5db" stroke-width="1" />
+<rect x="788" y="624" width="5" height="91" rx="2" fill="#5d4037" stroke="#5d4037" stroke-width="0" />
+<text x="802" y="645" font-size="13" font-weight="700" fill="#5d4037" text-anchor="start">Consola</text>
+<text x="802" y="664" font-size="12" font-weight="400" fill="#374151" text-anchor="start">app:crear-admin ─ primer administrador</text>
+<text x="802" y="681" font-size="12" font-weight="400" fill="#374151" text-anchor="start">app:probar-email [--dry-run] ─ pruebas de email</text>
+<text x="802" y="698" font-size="12" font-weight="400" fill="#374151" text-anchor="start">schedule: sanctum:prune-expired (cron diario)</text>
+<line x1="1274" y1="330" x2="1306" y2="330" stroke="#283593" stroke-width="2" marker-end="url(#punta)" />
+<line x1="1274" y1="690" x2="1306" y2="690" stroke="#283593" stroke-width="2" marker-end="url(#punta)" />
+<rect x="1308" y="110" width="368" height="450" rx="16" fill="#fffaf3" stroke="#ef6c00" stroke-width="2" />
+<rect x="1308" y="110" width="368" height="52" rx="16" fill="#ef6c00" stroke="#ef6c00" stroke-width="0" />
+<rect x="1308" y="146" width="368" height="16" rx="0" fill="#ef6c00" stroke="#ef6c00" stroke-width="0" />
+<text x="1326" y="134" font-size="17" font-weight="700" fill="#ffffff" text-anchor="start">Base de datos</text>
+<text x="1326" y="153" font-size="11.5" font-weight="400" fill="#e3f2fd" text-anchor="start">MySQL / MariaDB (hPanel)</text>
+<rect x="1324" y="178" width="336" height="202" rx="10" fill="#ffffff" stroke="#d1d5db" stroke-width="1" />
+<rect x="1324" y="178" width="5" height="202" rx="2" fill="#ef6c00" stroke="#ef6c00" stroke-width="0" />
+<text x="1338" y="199" font-size="13" font-weight="700" fill="#ef6c00" text-anchor="start">Tablas</text>
+<text x="1338" y="218" font-size="12" font-weight="400" fill="#374151" text-anchor="start">users · personal_access_tokens</text>
+<text x="1338" y="236" font-size="12" font-weight="400" fill="#374151" text-anchor="start">clientes · emisores · series</text>
+<text x="1338" y="254" font-size="12" font-weight="400" fill="#374151" text-anchor="start">presupuestos</text>
+<text x="1338" y="272" font-size="12" font-weight="400" fill="#374151" text-anchor="start">facturas (+ JSON datos congelados)</text>
+<text x="1338" y="290" font-size="12" font-weight="400" fill="#374151" text-anchor="start">documento_textos</text>
+<text x="1338" y="308" font-size="12" font-weight="400" fill="#374151" text-anchor="start">presupuesto_documento_texto</text>
+<text x="1338" y="326" font-size="12" font-weight="400" fill="#374151" text-anchor="start">factura_documento_texto</text>
+<text x="1338" y="344" font-size="12" font-weight="400" fill="#374151" text-anchor="start">envios (historial email / WhatsApp)</text>
+<text x="1338" y="362" font-size="12" font-weight="400" fill="#374151" text-anchor="start">sessions · cache · jobs</text>
+<rect x="1308" y="580" width="368" height="230" rx="16" fill="#f5fbf5" stroke="#2e7d32" stroke-width="2" />
+<rect x="1308" y="580" width="368" height="52" rx="16" fill="#2e7d32" stroke="#2e7d32" stroke-width="0" />
+<rect x="1308" y="616" width="368" height="16" rx="0" fill="#2e7d32" stroke="#2e7d32" stroke-width="0" />
+<text x="1326" y="604" font-size="17" font-weight="700" fill="#ffffff" text-anchor="start">Servicios externos</text>
+<text x="1326" y="623" font-size="11.5" font-weight="400" fill="#e3f2fd" text-anchor="start">Fuera de la aplicación</text>
+<rect x="1324" y="648" width="336" height="57" rx="10" fill="#ffffff" stroke="#d1d5db" stroke-width="1" />
+<rect x="1324" y="648" width="5" height="57" rx="2" fill="#2e7d32" stroke="#2e7d32" stroke-width="0" />
+<text x="1338" y="669" font-size="13" font-weight="700" fill="#2e7d32" text-anchor="start">SMTP (Hostinger)</text>
+<text x="1338" y="688" font-size="12" font-weight="400" fill="#374151" text-anchor="start">smtp.hostinger.com:465 · SPF/DKIM/DMARC</text>
+<rect x="1324" y="718" width="336" height="57" rx="10" fill="#ffffff" stroke="#d1d5db" stroke-width="1" />
+<rect x="1324" y="718" width="5" height="57" rx="2" fill="#2e7d32" stroke="#2e7d32" stroke-width="0" />
+<text x="1338" y="739" font-size="13" font-weight="700" fill="#2e7d32" text-anchor="start">WhatsApp</text>
+<text x="1338" y="758" font-size="12" font-weight="400" fill="#374151" text-anchor="start">wa.me/&lt;móvil&gt;?text=… (lo envía el usuario)</text>
+<rect x="24" y="836" width="1652" height="250" rx="16" fill="#ffffff" stroke="#d1d5db" stroke-width="1.5" />
+<text x="44" y="868" font-size="17" font-weight="800" fill="#111827" text-anchor="start">Flujo de documentos</text>
+<text x="44" y="890" font-size="12" font-weight="400" fill="#6b7280" text-anchor="start">Estados del presupuesto (los guarda la BD) · &quot;Facturado&quot; se calcula a partir de la factura asociada</text>
+<rect x="44" y="912" width="120" height="34" rx="17" fill="#f5f5f5" stroke="#616161" stroke-width="1.5" />
+<text x="104.0" y="934" font-size="12.5" font-weight="700" fill="#616161" text-anchor="middle">Borrador</text>
+<line x1="166" y1="929" x2="226" y2="929" stroke="#1565c0" stroke-width="2" marker-end="url(#punta)" />
+<text x="196.0" y="921.0" font-size="11" font-weight="600" fill="#1565c0" text-anchor="middle">enviar</text>
+<rect x="228" y="912" width="120" height="34" rx="17" fill="#e3f2fd" stroke="#1565c0" stroke-width="1.5" />
+<text x="288.0" y="934" font-size="12.5" font-weight="700" fill="#1565c0" text-anchor="middle">Enviado</text>
+<line x1="350" y1="929" x2="410" y2="929" stroke="#2e7d32" stroke-width="2" marker-end="url(#punta)" />
+<text x="380.0" y="921.0" font-size="11" font-weight="600" fill="#2e7d32" text-anchor="middle">aceptar</text>
+<rect x="412" y="912" width="120" height="34" rx="17" fill="#e8f5e9" stroke="#2e7d32" stroke-width="1.5" />
+<text x="472.0" y="934" font-size="12.5" font-weight="700" fill="#2e7d32" text-anchor="middle">Aceptado</text>
+<line x1="534" y1="929" x2="594" y2="929" stroke="#6a1b9a" stroke-width="2" marker-end="url(#punta)" />
+<text x="564.0" y="921.0" font-size="11" font-weight="600" fill="#6a1b9a" text-anchor="middle">facturar</text>
+<rect x="596" y="912" width="130" height="34" rx="17" fill="#f3e5f5" stroke="#6a1b9a" stroke-width="1.5" />
+<text x="661.0" y="934" font-size="12.5" font-weight="700" fill="#6a1b9a" text-anchor="middle">Facturado</text>
+<line x1="288" y1="948" x2="288" y2="988" stroke="#c62828" stroke-width="2" marker-end="url(#punta)" />
+<text x="296" y="972" font-size="11" font-weight="600" fill="#c62828" text-anchor="start">rechazar</text>
+<rect x="228" y="990" width="120" height="34" rx="17" fill="#ffebee" stroke="#c62828" stroke-width="1.5" />
+<text x="288.0" y="1012" font-size="12.5" font-weight="700" fill="#c62828" text-anchor="middle">Rechazado</text>
+<path d="M228,1007 C150,1007 104,982 104,948" fill="none" stroke="#9e9e9e" stroke-width="2" stroke-dasharray="6 5" marker-end="url(#punta)"/>
+<text x="120" y="1016" font-size="11" font-weight="600" fill="#757575" text-anchor="start">editar y reenviar</text>
+<rect x="412" y="990" width="120" height="34" rx="17" fill="#fafafa" stroke="#9e9e9e" stroke-width="1.5" />
+<text x="472.0" y="1012" font-size="12.5" font-weight="700" fill="#9e9e9e" text-anchor="middle">Desactivado</text>
+<text x="540" y="1012" font-size="11" font-weight="400" fill="#9e9e9e" text-anchor="start">(si no tiene factura)</text>
+<text x="44" y="1062" font-size="11.5" font-weight="400" fill="#374151" text-anchor="start">Editable mientras no esté facturado ni desactivado · si ya se envió, avisa de reenviar</text>
+<text x="790" y="868" font-size="15" font-weight="800" fill="#111827" text-anchor="start">Factura</text>
+<rect x="790" y="912" width="190" height="34" rx="17" fill="#fff8e1" stroke="#ef6c00" stroke-width="1.5" />
+<text x="885.0" y="934" font-size="12.5" font-weight="700" fill="#ef6c00" text-anchor="middle">Pendiente de cobro</text>
+<line x1="982" y1="929" x2="1062" y2="929" stroke="#2e7d32" stroke-width="2" marker-end="url(#punta)" />
+<text x="1022.0" y="921.0" font-size="11" font-weight="600" fill="#2e7d32" text-anchor="middle">cobrar</text>
+<rect x="1064" y="912" width="120" height="34" rx="17" fill="#e8f5e9" stroke="#2e7d32" stroke-width="1.5" />
+<text x="1124.0" y="934" font-size="12.5" font-weight="700" fill="#2e7d32" text-anchor="middle">Pagada</text>
+<line x1="728" y1="929" x2="788" y2="929" stroke="#6a1b9a" stroke-width="2" marker-end="url(#punta)" />
+<text x="790" y="974" font-size="11.5" font-weight="400" fill="#374151" text-anchor="start">· Editable (fecha, IVA, textos) solo pendiente de cobro</text>
+<text x="790" y="992" font-size="11.5" font-weight="400" fill="#374151" text-anchor="start">· IVA 0 % → texto legal «IVA 0 % · Inversión del sujeto pasivo»</text>
+<text x="790" y="1010" font-size="11.5" font-weight="400" fill="#374151" text-anchor="start">· Numeración: serie por año (presupuesto y factura)</text>
+<text x="790" y="1028" font-size="11.5" font-weight="400" fill="#374151" text-anchor="start">· Envíos: email (PDF adjunto) y WhatsApp (solo móviles)</text>
+<rect x="1230" y="852" width="430" height="220" rx="12" fill="#fffde7" stroke="#fbc02d" stroke-width="1.5" />
+<text x="1248" y="880" font-size="14" font-weight="800" fill="#8d6e00" text-anchor="start">Pendiente (siguientes versiones)</text>
+<text x="1248" y="906" font-size="12" font-weight="400" fill="#5d4037" text-anchor="start">· Portal del emisor (sus presupuestos y facturas)</text>
+<text x="1248" y="928" font-size="12" font-weight="400" fill="#5d4037" text-anchor="start">· Facturas rectificativas</text>
+<text x="1248" y="950" font-size="12" font-weight="400" fill="#5d4037" text-anchor="start">· Verifactu: registro encadenado (hash) + código QR</text>
+<text x="1248" y="972" font-size="12" font-weight="400" fill="#5d4037" text-anchor="start">· Envío a la AEAT con certificado digital</text>
+<text x="1248" y="994" font-size="12" font-weight="400" fill="#5d4037" text-anchor="start">· Fecha de operación / retención IRPF (si aplica)</text>
+<text x="1248" y="1016" font-size="12" font-weight="400" fill="#5d4037" text-anchor="start">· IVA por defecto por emisor</text>
+<text x="1248" y="1038" font-size="12" font-weight="400" fill="#5d4037" text-anchor="start">· Textos legales según tipo de cliente</text>
+<text x="24" y="1120" font-size="12" font-weight="700" fill="#374151" text-anchor="start">Leyenda:</text>
+<rect x="90" y="1108" width="14" height="14" rx="3" fill="#1565c0" stroke="#1565c0" stroke-width="0" />
+<text x="110" y="1120" font-size="12" font-weight="400" fill="#374151" text-anchor="start">Front</text>
+<rect x="160" y="1108" width="14" height="14" rx="3" fill="#283593" stroke="#283593" stroke-width="0" />
+<text x="180" y="1120" font-size="12" font-weight="400" fill="#374151" text-anchor="start">API</text>
+<rect x="220" y="1108" width="14" height="14" rx="3" fill="#ef6c00" stroke="#ef6c00" stroke-width="0" />
+<text x="240" y="1120" font-size="12" font-weight="400" fill="#374151" text-anchor="start">Datos</text>
+<rect x="292" y="1108" width="14" height="14" rx="3" fill="#2e7d32" stroke="#2e7d32" stroke-width="0" />
+<text x="312" y="1120" font-size="12" font-weight="400" fill="#374151" text-anchor="start">Externo / cliente</text>
+<rect x="420" y="1108" width="14" height="14" rx="3" fill="#fbc02d" stroke="#fbc02d" stroke-width="0" />
+<text x="440" y="1120" font-size="12" font-weight="400" fill="#374151" text-anchor="start">Pendiente</text>
+<text x="24" y="1150" font-size="12" font-weight="400" fill="#6b7280" text-anchor="start">Documentación: facturacion-front/CLAUDE.md (registro de cambios) · facturacion-front/DEPLOY-HOSTINGER.md (despliegue)</text>
+<text x="24" y="1172" font-size="12" font-weight="400" fill="#6b7280" text-anchor="start">Rutas front: /login · /admin · /admin/clientes · /admin/users · /admin/presupuestos[/:id/preview] · /admin/facturas[/:id/preview] · /admin/emisores · /admin/series · /admin/documento-textos · /admin/correos · /emisor</text>
+<text x="24" y="1194" font-size="12" font-weight="400" fill="#6b7280" text-anchor="start">Migraciones nuevas desde la base: unique presupuesto_id · mostrar_observaciones · descripcion facturas · factura_documento_texto · titulo textos · datos congelados · texto IVA 0 % · envios</text>
+</svg>

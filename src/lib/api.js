@@ -1,8 +1,15 @@
 import axios from 'axios';
 
+// URL del API: VITE_API_BASE_URL en .env (desarrollo) o .env.production (build de producción)
+const baseURL = import.meta.env.VITE_API_BASE_URL;
+
+if (!baseURL) {
+  // Sin la variable el build apuntaría a ningún sitio: se avisa en consola
+  console.error('Falta VITE_API_BASE_URL en el .env del front (p. ej. https://api.midominio.com/api)');
+}
+
 const api = axios.create({
-//   baseURL: 'http://api-facturacion.local/api',
-  baseURL: import.meta.env.VITE_API_BASE_URL || 'http://api-facturacion.local/api',
+  baseURL,
   headers: {
     Accept: 'application/json',
   },
@@ -19,13 +26,21 @@ api.interceptors.request.use((config) => {
   return config;
 });
 
-// 🚨 Interceptor de respuesta: controla errores 401
+// 🚨 Interceptor de respuesta: sesión caducada o usuario desactivado → al login
 api.interceptors.response.use(
   (response) => response,
   (error) => {
-    if (error.response?.status === 401) {
+    const status = error.response?.status;
+    // El propio login devuelve 401 con credenciales incorrectas: ese error lo muestra LoginPage
+    const esLogin = error.config?.url?.endsWith('/login');
+
+    if (status === 401 && !esLogin) {
       localStorage.removeItem('token');
-      window.location.href = '/login';
+      const mensaje = error.response?.data?.message;
+      if (mensaje) sessionStorage.setItem('loginMensaje', mensaje);
+      if (window.location.pathname !== '/login') {
+        window.location.href = '/login';
+      }
     }
     return Promise.reject(error);
   }

@@ -10,6 +10,7 @@ import {
   Grid,
   useTheme,
   useMediaQuery,
+  Alert,
 } from '@mui/material';
 
 import { createSerie } from '../services/series.service';
@@ -24,6 +25,7 @@ export default function SerieForm({ open, onClose, onSaved }) {
   });
 
   const [saving, setSaving] = useState(false);
+  const [errorMsg, setErrorMsg] = useState('');
 
   const handleChange = (e) => {
     setForm({ ...form, [e.target.name]: e.target.value });
@@ -32,12 +34,19 @@ export default function SerieForm({ open, onClose, onSaved }) {
   const handleSubmit = async () => {
     try {
       setSaving(true);
+      setErrorMsg('');
       await createSerie(form);
       onSaved();
       onClose();
     } catch (error) {
       console.error(error);
-      alert('Error al crear la serie');
+      // Mensaje del API (validación en español) o genérico
+      const errores = error.response?.data?.errors;
+      setErrorMsg(
+        (errores && Object.values(errores)[0]?.[0]) ||
+          error.response?.data?.message ||
+          'Error al crear la serie'
+      );
     } finally {
       setSaving(false);
     }
@@ -54,8 +63,13 @@ export default function SerieForm({ open, onClose, onSaved }) {
       <DialogTitle>Nueva serie</DialogTitle>
 
       <DialogContent dividers>
+        {errorMsg && (
+          <Alert severity="error" sx={{ mb: 2 }} onClose={() => setErrorMsg('')}>
+            {errorMsg}
+          </Alert>
+        )}
         <Grid container spacing={2}>
-          <Grid item xs={12}>
+          <Grid size={12}>
             <TextField
               select
               fullWidth
@@ -69,7 +83,7 @@ export default function SerieForm({ open, onClose, onSaved }) {
             </TextField>
           </Grid>
 
-          <Grid item xs={12}>
+          <Grid size={12}>
             <TextField
               fullWidth
               type="number"

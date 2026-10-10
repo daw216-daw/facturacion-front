@@ -9,6 +9,7 @@ import {
   Grid,
   useMediaQuery,
   useTheme,
+  Alert,
 } from '@mui/material';
 
 import { createEmisor, updateEmisor } from '../services/emisores.service';
@@ -31,8 +32,10 @@ export default function EmisorForm({ open, onClose, onSaved, emisor }) {
 
   const [form, setForm] = useState(EMPTY_FORM);
   const [saving, setSaving] = useState(false);
+  const [errorMsg, setErrorMsg] = useState('');
 
   useEffect(() => {
+    setErrorMsg('');
     if (emisor) {
       // SOLO campos editables
       setForm({
@@ -58,6 +61,7 @@ export default function EmisorForm({ open, onClose, onSaved, emisor }) {
   const handleSubmit = async () => {
     try {
       setSaving(true);
+      setErrorMsg('');
 
       if (emisor) {
         await updateEmisor(emisor.id, form);
@@ -69,7 +73,13 @@ export default function EmisorForm({ open, onClose, onSaved, emisor }) {
       onClose();
     } catch (error) {
       console.error(error);
-      alert('Error al guardar el emisor');
+      // Mensaje del API (validación en español) o genérico
+      const errores = error.response?.data?.errors;
+      setErrorMsg(
+        (errores && Object.values(errores)[0]?.[0]) ||
+          error.response?.data?.message ||
+          'Error al guardar el emisor'
+      );
     } finally {
       setSaving(false);
     }
@@ -86,8 +96,13 @@ export default function EmisorForm({ open, onClose, onSaved, emisor }) {
       <DialogTitle>{emisor ? 'Editar emisor' : 'Nuevo emisor'}</DialogTitle>
 
       <DialogContent dividers>
+        {errorMsg && (
+          <Alert severity="error" sx={{ mb: 2 }} onClose={() => setErrorMsg('')}>
+            {errorMsg}
+          </Alert>
+        )}
         <Grid container spacing={2}>
-          <Grid item xs={12} sm={6}>
+          <Grid size={{ xs: 12, sm: 6 }}>
             <TextField
               fullWidth
               label="Nombre"
@@ -98,7 +113,7 @@ export default function EmisorForm({ open, onClose, onSaved, emisor }) {
             />
           </Grid>
 
-          <Grid item xs={12} sm={6}>
+          <Grid size={{ xs: 12, sm: 6 }}>
             <TextField
               fullWidth
               label="NIF"
@@ -109,7 +124,7 @@ export default function EmisorForm({ open, onClose, onSaved, emisor }) {
             />
           </Grid>
 
-          <Grid item xs={12} sm={6}>
+          <Grid size={{ xs: 12, sm: 6 }}>
             <TextField
               fullWidth
               label="Dirección"
@@ -119,7 +134,7 @@ export default function EmisorForm({ open, onClose, onSaved, emisor }) {
             />
           </Grid>
 
-          <Grid item xs={12} sm={3}>
+          <Grid size={{ xs: 12, sm: 3 }}>
             <TextField
               fullWidth
               label="CP"
@@ -129,7 +144,7 @@ export default function EmisorForm({ open, onClose, onSaved, emisor }) {
             />
           </Grid>
 
-          <Grid item xs={12} sm={3}>
+          <Grid size={{ xs: 12, sm: 3 }}>
             <TextField
               fullWidth
               label="Población"
@@ -139,7 +154,7 @@ export default function EmisorForm({ open, onClose, onSaved, emisor }) {
             />
           </Grid>
 
-          <Grid item xs={12} sm={6}>
+          <Grid size={{ xs: 12, sm: 6 }}>
             <TextField
               fullWidth
               label="Provincia"
@@ -149,7 +164,7 @@ export default function EmisorForm({ open, onClose, onSaved, emisor }) {
             />
           </Grid>
 
-          <Grid item xs={12} sm={6}>
+          <Grid size={{ xs: 12, sm: 6 }}>
             <TextField
               fullWidth
               label="Email"
@@ -159,7 +174,7 @@ export default function EmisorForm({ open, onClose, onSaved, emisor }) {
             />
           </Grid>
 
-          <Grid item xs={12} sm={6}>
+          <Grid size={{ xs: 12, sm: 6 }}>
             <TextField
               fullWidth
               label="Teléfono"
@@ -169,7 +184,7 @@ export default function EmisorForm({ open, onClose, onSaved, emisor }) {
             />
           </Grid>
 
-          <Grid item xs={12}>
+          <Grid size={12}>
             <TextField
               fullWidth
               label="IBAN"

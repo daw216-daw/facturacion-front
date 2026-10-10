@@ -8,6 +8,7 @@ import {
   Avatar,
   Box,
   Tooltip,
+  Divider,
 } from '@mui/material';
 
 import MenuIcon from '@mui/icons-material/Menu';
@@ -65,32 +66,42 @@ export default function AdminTopBar({
         )}
         {/* COLLAPSE SIDEBAR (DESKTOP) */}
         {showCollapseIcon && (
-          <IconButton
-            color="inherit"
-            onClick={onToggleSidebar}
-            sx={{ mr: 1 }}
-          >
-            {collapsed ? <ChevronRightIcon /> : <ChevronLeftIcon />}
-          </IconButton>
+          <Tooltip title={collapsed ? 'Expandir menú' : 'Contraer menú'}>
+            <IconButton
+              color="inherit"
+              onClick={onToggleSidebar}
+              sx={{ mr: 1 }}
+            >
+              {collapsed ? <ChevronRightIcon /> : <ChevronLeftIcon />}
+            </IconButton>
+          </Tooltip>
         )}
 
 
-        {/* TÍTULO */}
+        {/* TÍTULO: corto en móvil para que no empuje los iconos fuera de pantalla */}
         <Typography
           variant="h6"
+          noWrap
           sx={{
             flexGrow: 1,
+            minWidth: 0,
             fontSize: { xs: '1rem', sm: '1.25rem' },
-            whiteSpace: 'nowrap',
           }}
         >
-          Panel de administración
+          <Box component="span" sx={{ display: { xs: 'none', sm: 'inline' } }}>
+            Panel de administración
+          </Box>
+          <Box component="span" sx={{ display: { xs: 'inline', sm: 'none' } }}>
+            Facturación
+          </Box>
         </Typography>
 
         {/* DARK / LIGHT */}
-        <IconButton color="inherit" onClick={onToggleTheme}>
-          {mode === 'dark' ? <LightModeIcon /> : <DarkModeIcon />}
-        </IconButton>
+        <Tooltip title={mode === 'dark' ? 'Modo claro' : 'Modo oscuro'}>
+          <IconButton color="inherit" onClick={onToggleTheme}>
+            {mode === 'dark' ? <LightModeIcon /> : <DarkModeIcon />}
+          </IconButton>
+        </Tooltip>
 
         {/* AVATAR + MENU */}
         <Tooltip title="Cuenta">
@@ -119,14 +130,15 @@ export default function AdminTopBar({
           anchorOrigin={{ vertical: 'bottom', horizontal: 'right' }}
           transformOrigin={{ vertical: 'top', horizontal: 'right' }}
         >
-          <MenuItem disabled>
-            {user?.name}
-          </MenuItem>
-
-          <MenuItem onClick={handleCloseMenu}>
-            <PersonIcon fontSize="small" sx={{ mr: 1 }} />
-            Mi cuenta
-          </MenuItem>
+          {/* Datos de la sesión (solo lectura) */}
+          <Box sx={{ px: 2, py: 1, maxWidth: 280 }}>
+            <Typography variant="subtitle2" noWrap>{user?.name}</Typography>
+            <Typography variant="body2" color="text.secondary" noWrap>{user?.email}</Typography>
+            <Typography variant="caption" color="text.secondary">
+              {user?.role === 'admin' ? 'Administrador' : user?.role}
+            </Typography>
+          </Box>
+          <Divider />
 
           <MenuItem onClick={handleLogout}>
             <LogoutIcon fontSize="small" sx={{ mr: 1 }} />

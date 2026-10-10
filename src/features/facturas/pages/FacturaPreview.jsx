@@ -1,29 +1,21 @@
-import { useEffect, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import {
   Alert,
   Box,
   Button,
   Chip,
-  CircularProgress,
-  Dialog,
-  DialogActions,
-  DialogContent,
-  DialogTitle,
   Divider,
-  Grid,
-  Paper,
   Snackbar,
   Stack,
   Typography,
 } from '@mui/material';
-import ArrowBackIcon from '@mui/icons-material/ArrowBack';
-import PaidIcon from '@mui/icons-material/Paid';
-import PictureAsPdfIcon from '@mui/icons-material/PictureAsPdf';
-import DownloadIcon from '@mui/icons-material/Download';
-import EmailIcon from '@mui/icons-material/Email';
-import WhatsAppIcon from '@mui/icons-material/WhatsApp';
 import dayjs from 'dayjs';
+import EuroIcon from '@mui/icons-material/Euro';
+import DownloadIcon from '@mui/icons-material/Download';
+import ShareIcon from '@mui/icons-material/Share';
+import RequestQuoteIcon from '@mui/icons-material/RequestQuote';
+import EditIcon from '@mui/icons-material/Edit';
 
 import {
   getFacturaPreview,
@@ -32,31 +24,63 @@ import {
   sendFacturaEmail,
   getFacturaWhatsappLink,
 } from '../services/facturas.service';
+import { getEstadoFacturaConfig } from '../facturaEstados';
+import { formatEuro } from '../../presupuestos/presupuestoEstados';
+import ConfirmActionDialog from '../../../common/ConfirmActionDialog';
+import ShareDialog from '../../../common/ShareDialog';
+import HistorialEnvios from '../../../common/documentPreview/HistorialEnvios';
+import { abrirWhatsapp } from '../../../common/whatsapp';
+import EditarFacturaDialog from '../components/EditarFacturaDialog';
+import {
+  DocumentSheet,
+  SheetTitle,
+  SheetSectionTitle,
+  SheetCard,
+  SheetFooter,
+  RichText,
+  PartyLines,
+  PAPER,
+} from '../../../common/documentPreview/DocumentSheet';
+import {
+  PreviewToolbar,
+  PreviewLayout,
+  AsideCard,
+  AsideRow,
+  PreviewSkeleton,
+  PreviewError,
+} from '../../../common/documentPreview/PreviewShell';
 
 export default function FacturaPreview() {
   const { id } = useParams();
+  const navigate = useNavigate();
+
   const [data, setData] = useState(null);
   const [loading, setLoading] = useState(true);
   const [paying, setPaying] = useState(false);
+  const [confirmPay, setConfirmPay] = useState(false);
   const [pdfLoading, setPdfLoading] = useState(false);
   const [shareLoading, setShareLoading] = useState(false);
   const [shareOpen, setShareOpen] = useState(false);
+  const [shareError, setShareError] = useState('');
+  const [editOpen, setEditOpen] = useState(false);
   const [feedback, setFeedback] = useState({
     open: false,
     severity: 'success',
     message: '',
   });
-  const navigate = useNavigate();
 
-  const loadPreview = async () => {
+  const loadPreview = useCallback(async () => {
     const response = await getFacturaPreview(id);
     setData(response);
     return response;
-  };
+  }, [id]);
 
   useEffect(() => {
-    loadPreview().finally(() => setLoading(false));
-  }, [id]);
+    setLoading(true);
+    loadPreview()
+      .catch((e) => console.error(e))
+      .finally(() => setLoading(false));
+  }, [loadPreview]);
 
   const showFeedback = (message, severity = 'success') => {
     setFeedback({ open: true, severity, message });
@@ -66,6 +90,25 @@ export default function FacturaPreview() {
     if (reason === 'clickaway') return;
     setFeedback((prev) => ({ ...prev, open: false }));
   };
+
+  const goBack = () => navigate('/admin/facturas');
+
+  if (loading) return <PreviewSkeleton />;
+  if (!data) {
+    return (
+      <PreviewError
+        message="No se pudo cargar la factura"
+        backLabel="Volver a facturas"
+        onBack={goBack}
+      />
+    );
+  }
+
+  const { documento, cliente, emisor, textos_legales = [], origen, envios = [] } = data;
+  // Para compartir se usa el contacto ACTUAL del cliente (la factura guarda una copia congelada)
+  const contacto = data.contacto ?? { email: cliente?.email, telefono: cliente?.telefono };
+  const estadoConfig = getEstadoFacturaConfig(documento.estado);
+  const busy = pdfLoading || paying || shareLoading;
 
   const handleMarkAsPaid = async () => {
     try {
@@ -81,6 +124,7 @@ export default function FacturaPreview() {
       );
     } finally {
       setPaying(false);
+      setConfirmPay(false);
     }
   };
 
@@ -95,7 +139,7 @@ export default function FacturaPreview() {
       if (download) {
         const link = document.createElement('a');
         link.href = pdfUrl;
-        link.download = `factura-${data.documento.anio}-${String(data.documento.numero).padStart(4, '0')}.pdf`;
+        link.download = `factura-${documento.anio}-${String(documento.numero).padStart(4, '0')}.pdf`;
         document.body.appendChild(link);
         link.click();
         link.remove();
@@ -112,240 +156,340 @@ export default function FacturaPreview() {
     }
   };
 
-  const handleShare = async (channel) => {
+  // datos: { email, copia_emisor } o { telefono } (destinatario editable en el diálogo)
+  const handleShare = async (channel, datos = {}) => {
     try {
       setShareLoading(true);
+      setShareError('');
 
       if (channel === 'email') {
-        const response = await sendFacturaEmail(id);
+        const response = await sendFacturaEmail(id, datos);
         showFeedback(response.message || 'Factura enviada por email correctamente');
-        setShareOpen(false);
       }
 
       if (channel === 'whatsapp') {
-        const response = await getFacturaWhatsappLink(id);
-        window.open(response.whatsapp_url, '_blank', 'noopener,noreferrer');
-        setShareOpen(false);
+        await abrirWhatsapp(() => getFacturaWhatsappLink(id, datos));
+        showFeedback('Se ha abierto WhatsApp con el mensaje: revísalo y pulsa enviar.', 'info');
       }
+
+      setShareOpen(false);
+      await loadPreview();
     } catch (error) {
       console.error(error);
-      showFeedback(
-        error.response?.data?.message || 'No se pudo compartir la factura',
-        'error'
+      const errores = error.response?.data?.errors;
+      setShareError(
+        (errores && Object.values(errores)[0]?.[0]) ||
+          error.response?.data?.message ||
+          error.message ||
+          'No se pudo compartir la factura'
       );
+      loadPreview().catch(() => {});
     } finally {
       setShareLoading(false);
     }
   };
 
-  if (loading) return <CircularProgress />;
-  if (!data) return <Typography>Error al cargar la factura</Typography>;
+  /* ───────────── DOCUMENTO (igual que el PDF) ───────────── */
+  const sumCell = { textAlign: 'right', whiteSpace: 'nowrap', fontVariantNumeric: 'tabular-nums' };
+  const hayTrabajos = (documento.descripcion ?? '').replace(/<[^>]*>/g, '').trim() !== '';
 
-  const { documento, cliente, emisor, texto_legal, origen } = data;
+  const documentoCliente = (
+    <DocumentSheet>
+      {/* Cabecera: el estado es interno y no se imprime */}
+      <Stack direction="row" justifyContent="space-between" alignItems="flex-start" spacing={2}>
+        <SheetTitle>Factura</SheetTitle>
+        <Box sx={{ textAlign: 'right', pt: 0.5 }}>
+          <Typography sx={{ color: PAPER.text, whiteSpace: 'nowrap' }}>
+            <strong>Nº:</strong> {documento.numero}/{documento.anio}
+          </Typography>
+          <Typography sx={{ color: PAPER.text, whiteSpace: 'nowrap' }}>
+            <strong>Fecha:</strong> {documento.fecha ? dayjs(documento.fecha).format('DD/MM/YYYY') : '—'}
+          </Typography>
+        </Box>
+      </Stack>
+
+      {/* Cliente */}
+      <SheetSectionTitle>Datos del cliente</SheetSectionTitle>
+      <SheetCard title={cliente?.nombre} sx={{ width: { xs: '100%', sm: '60%' } }}>
+        <PartyLines data={cliente} />
+      </SheetCard>
+
+      {/* Detalle con totales al final */}
+      <SheetSectionTitle>Detalle de la factura</SheetSectionTitle>
+      <Box sx={{ overflowX: 'auto' }}>
+        <Box
+          component="table"
+          sx={{
+            width: '100%',
+            borderCollapse: 'collapse',
+            '& th': {
+              bgcolor: PAPER.header,
+              color: '#fff',
+              textAlign: 'left',
+              p: 1.25,
+              fontSize: 12,
+              fontWeight: 700,
+            },
+            '& td': {
+              border: `1px solid ${PAPER.border}`,
+              p: 1.25,
+              verticalAlign: 'top',
+              color: PAPER.text,
+            },
+          }}
+        >
+          <thead>
+            <tr>
+              <th>Trabajos realizados</th>
+              <Box component="th" sx={{ width: 150, textAlign: 'right !important' }}>Importe</Box>
+            </tr>
+          </thead>
+          <tbody>
+            {hayTrabajos && (
+              <tr>
+                <td>
+                  <RichText html={documento.descripcion} />
+                </td>
+                <td />
+              </tr>
+            )}
+            <tr>
+              <Box component="td" sx={{ textAlign: 'right', color: '#374151 !important' }}>Base imponible</Box>
+              <Box component="td" sx={sumCell}>{formatEuro(documento.base_imponible)}</Box>
+            </tr>
+            <tr>
+              <Box component="td" sx={{ textAlign: 'right', color: '#374151 !important' }}>
+                IVA ({documento.iva_porcentaje}%)
+              </Box>
+              <Box component="td" sx={sumCell}>{formatEuro(documento.iva_importe)}</Box>
+            </tr>
+            <tr>
+              <Box component="td" sx={{ textAlign: 'right', fontWeight: 800, color: `${PAPER.title} !important` }}>
+                Total factura
+              </Box>
+              <Box component="td" sx={{ ...sumCell, fontWeight: 800, fontSize: 17, color: `${PAPER.title} !important` }}>
+                {formatEuro(documento.total)}
+              </Box>
+            </tr>
+          </tbody>
+        </Box>
+      </Box>
+
+      {/* Datos de pago */}
+      {emisor?.iban && (
+        <Box
+          sx={{
+            mt: 2,
+            border: '1px solid #d1fae5',
+            borderRadius: 2,
+            px: 1.75,
+            py: 1.25,
+            bgcolor: '#ecfdf5',
+            color: '#065f46',
+          }}
+        >
+          <Typography sx={{ fontSize: 14 }}>
+            <strong>Datos de pago:</strong> IBAN{' '}
+            <Box component="span" sx={{ fontFamily: 'monospace', fontSize: 15 }}>
+              {emisor.iban}
+            </Box>
+          </Typography>
+        </Box>
+      )}
+
+      {/* Textos legales elegidos para esta factura */}
+      {textos_legales.length > 0 && (
+        <Stack spacing={1.5} sx={{ mt: 3 }}>
+          {textos_legales.map((texto, i) => (
+            <SheetCard key={i} soft>
+              <RichText html={texto} sx={{ fontSize: 13 }} />
+            </SheetCard>
+          ))}
+        </Stack>
+      )}
+
+      <Box sx={{ flexGrow: 1, minHeight: 24 }} />
+
+      {/* Pie con el emisor, como en el PDF */}
+      <SheetFooter emisor={emisor} />
+    </DocumentSheet>
+  );
+
+  /* ───────────── PANEL INTERNO ───────────── */
+  const panelInterno = (
+    <>
+      <AsideCard title="Resumen">
+        <AsideRow label="Estado">
+          <Chip size="small" label={estadoConfig.label} color={estadoConfig.color} />
+        </AsideRow>
+        <AsideRow label="Número">
+          <Typography variant="body2" fontWeight={600}>
+            {documento.numero}/{documento.anio}
+          </Typography>
+        </AsideRow>
+        <AsideRow label="Fecha">
+          <Typography variant="body2">
+            {documento.fecha ? dayjs(documento.fecha).format('DD/MM/YYYY') : '—'}
+          </Typography>
+        </AsideRow>
+        {/* Dato interno: ya no se imprime en la factura */}
+        <AsideRow label="Origen">
+          <Typography variant="body2">
+            {origen ? `Generada desde presupuesto ${origen.numero}/${origen.anio}` : 'Factura manual'}
+          </Typography>
+        </AsideRow>
+        <Divider sx={{ my: 1 }} />
+        <AsideRow label="Base imponible">
+          <Typography variant="body2" sx={{ fontVariantNumeric: 'tabular-nums' }}>
+            {formatEuro(documento.base_imponible)}
+          </Typography>
+        </AsideRow>
+        <AsideRow label={`IVA ${documento.iva_porcentaje}%`}>
+          <Typography variant="body2" sx={{ fontVariantNumeric: 'tabular-nums' }}>
+            {formatEuro(documento.iva_importe)}
+          </Typography>
+        </AsideRow>
+        <AsideRow label="Total">
+          <Typography variant="h6" fontWeight={700} sx={{ fontVariantNumeric: 'tabular-nums' }}>
+            {formatEuro(documento.total)}
+          </Typography>
+        </AsideRow>
+
+        {documento.estado === 'emitida' && (
+          <Button
+            fullWidth
+            variant="outlined"
+            color="warning"
+            startIcon={<EditIcon />}
+            onClick={() => setEditOpen(true)}
+            disabled={busy}
+            sx={{ mt: 1.5 }}
+          >
+            Editar factura
+          </Button>
+        )}
+
+        {documento.estado === 'emitida' && (
+          <Button
+            fullWidth
+            variant="contained"
+            color="success"
+            startIcon={<EuroIcon />}
+            onClick={() => setConfirmPay(true)}
+            disabled={busy}
+            sx={{ mt: 1.5 }}
+          >
+            Marcar como pagada
+          </Button>
+        )}
+
+        {origen && (
+          <Button
+            fullWidth
+            variant="outlined"
+            startIcon={<RequestQuoteIcon />}
+            onClick={() => navigate(`/admin/presupuestos/${origen.id}/preview`)}
+            sx={{ mt: 1 }}
+          >
+            Ver presupuesto {origen.numero}/{origen.anio}
+          </Button>
+        )}
+      </AsideCard>
+
+      <HistorialEnvios envios={envios} />
+
+      <AsideCard title="Cliente">
+        <Typography fontWeight={600}>{cliente?.nombre || '—'}</Typography>
+        <Typography variant="body2" color="text.secondary">
+          {contacto?.email || 'Sin email'}
+        </Typography>
+        <Typography variant="body2" color="text.secondary">
+          {contacto?.telefono || 'Sin teléfono'}
+        </Typography>
+
+        <Button
+          fullWidth
+          size="small"
+          startIcon={<ShareIcon />}
+          onClick={() => setShareOpen(true)}
+          disabled={busy}
+          sx={{ mt: 1.5 }}
+        >
+          Compartir con el cliente
+        </Button>
+      </AsideCard>
+    </>
+  );
 
   return (
     <>
-      <Box
-        sx={{
-          maxWidth: 900,
-          mx: 'auto',
-          mb: 2,
-          display: 'flex',
-          justifyContent: 'space-between',
-          alignItems: 'center',
-          gap: 1,
-          flexWrap: 'wrap',
-        }}
-      >
-        <Button
-          startIcon={<ArrowBackIcon />}
-          onClick={() => navigate('/admin/facturas')}
-        >
-          Volver a facturas
-        </Button>
-
-        <Stack direction="row" spacing={1} flexWrap="wrap">
-          <Button
-            variant="outlined"
-            startIcon={<PictureAsPdfIcon />}
-            onClick={() => handlePdf(false)}
-            disabled={pdfLoading || paying}
-          >
-            Ver PDF
-          </Button>
-
-          <Button
-            variant="contained"
-            color="error"
-            startIcon={<DownloadIcon />}
-            onClick={() => handlePdf(true)}
-            disabled={pdfLoading || paying}
-          >
-            Descargar PDF
-          </Button>
-
-          <Button
-            variant="outlined"
-            color="primary"
-            startIcon={<EmailIcon />}
-            onClick={() => setShareOpen(true)}
-            disabled={pdfLoading || paying}
-          >
-            Compartir
-          </Button>
-
-          {documento.estado === 'emitida' && (
+      <PreviewToolbar
+        backLabel="Facturas"
+        onBack={goBack}
+        title={`Factura ${documento.numero}/${documento.anio}`}
+        chip={<Chip size="small" label={estadoConfig.label} color={estadoConfig.color} />}
+        actions={
+          <>
             <Button
-              variant="contained"
-              color="success"
-              startIcon={<PaidIcon />}
-              onClick={handleMarkAsPaid}
-              disabled={paying || pdfLoading}
-            >
-              Marcar pagada
-            </Button>
-          )}
-        </Stack>
-      </Box>
-
-      <Paper sx={{ p: 4, maxWidth: 900, mx: 'auto' }}>
-        <Box mb={3}>
-          <Typography variant="h4" fontWeight={600}>
-            Factura {documento.numero}/{documento.anio}
-          </Typography>
-
-          <Stack direction="row" spacing={1} mt={1} alignItems="center">
-            <Chip
               size="small"
-              label={documento.estado}
-              color={documento.estado === 'pagada' ? 'success' : 'warning'}
-            />
-
-            {documento.fecha && (
-              <Typography variant="subtitle1">
-                Fecha: {dayjs(documento.fecha).format('DD/MM/YYYY')}
-              </Typography>
-            )}
-          </Stack>
-        </Box>
-
-        <Divider sx={{ my: 3 }} />
-
-        <Grid container spacing={4}>
-          <Grid item xs={12} sm={6}>
-            <Typography variant="h6" gutterBottom>
-              Emisor
-            </Typography>
-
-            {emisor?.nombre && <Typography>{emisor.nombre}</Typography>}
-            {emisor?.nif && <Typography>{emisor.nif}</Typography>}
-            {emisor?.email && <Typography>{emisor.email}</Typography>}
-            {emisor?.telefono && <Typography>{emisor.telefono}</Typography>}
-            {emisor?.iban && <Typography>IBAN: {emisor.iban}</Typography>}
-          </Grid>
-
-          <Grid item xs={12} sm={6}>
-            <Typography variant="h6" gutterBottom>
-              Cliente
-            </Typography>
-
-            {cliente?.nombre && <Typography>{cliente.nombre}</Typography>}
-            {cliente?.nif && <Typography>{cliente.nif}</Typography>}
-            {cliente?.direccion && <Typography>{cliente.direccion}</Typography>}
-            {(cliente?.cp || cliente?.poblacion) && (
-              <Typography>
-                {cliente.cp} {cliente.poblacion}
-                {cliente.provincia ? `, ${cliente.provincia}` : ''}
-              </Typography>
-            )}
-            {cliente?.email && <Typography>{cliente.email}</Typography>}
-            {cliente?.telefono && <Typography>{cliente.telefono}</Typography>}
-          </Grid>
-        </Grid>
-
-        <Divider sx={{ my: 4 }} />
-
-        {origen && (
-          <>
-            <Typography variant="h6" gutterBottom>
-              Origen
-            </Typography>
-            <Typography sx={{ mb: 3 }}>
-              Generada desde presupuesto {origen.numero}/{origen.anio}
-            </Typography>
-            <Divider sx={{ my: 3 }} />
+              variant="outlined"
+              startIcon={<DownloadIcon />}
+              onClick={() => handlePdf(true)}
+              disabled={busy}
+            >
+              Descargar PDF
+            </Button>
+            <Button
+              size="small"
+              variant="contained"
+              startIcon={<ShareIcon />}
+              onClick={() => setShareOpen(true)}
+              disabled={busy}
+            >
+              Compartir
+            </Button>
           </>
-        )}
+        }
+      />
 
-        <Typography variant="h6" gutterBottom>
-          Resumen económico
-        </Typography>
+      <PreviewLayout document={documentoCliente} aside={panelInterno} />
 
-        <Stack spacing={1} sx={{ mb: 3 }}>
-          <Typography>Base imponible: {documento.base_imponible} €</Typography>
-          <Typography>IVA ({documento.iva_porcentaje}%): {documento.iva_importe} €</Typography>
-          <Typography variant="h5" fontWeight={600}>
-            Total: {documento.total} €
-          </Typography>
-        </Stack>
+      <ShareDialog
+        open={shareOpen}
+        title="Compartir factura"
+        description="¿Cómo quieres enviar la factura?"
+        contacto={contacto}
+        emisorEmail={emisor?.email}
+        loading={shareLoading}
+        error={shareError}
+        onClose={() => {
+          setShareOpen(false);
+          setShareError('');
+        }}
+        onEmail={(datos) => handleShare('email', datos)}
+        onWhatsapp={(datos) => handleShare('whatsapp', datos)}
+      />
 
-        {texto_legal?.trim() && (
-          <>
-            <Divider sx={{ my: 3 }} />
-            <Box
-              sx={{ mt: 4, fontSize: 14 }}
-              dangerouslySetInnerHTML={{ __html: texto_legal }}
-            />
-          </>
-        )}
-      </Paper>
+      <EditarFacturaDialog
+        open={editOpen}
+        factura={{ id: Number(id), ...documento, cliente }}
+        onClose={() => setEditOpen(false)}
+        onSaved={async () => {
+          await loadPreview();
+          showFeedback('Factura actualizada. Si el cliente ya la tenía, vuelve a enviársela.', 'info');
+        }}
+      />
 
-      {/* DIALOG COMPARTIR */}
-      <Dialog open={shareOpen} onClose={() => !shareLoading && setShareOpen(false)}>
-        <DialogTitle>Compartir factura</DialogTitle>
-
-        <DialogContent>
-          <Typography sx={{ mb: 1.5 }}>
-            ¿Cómo quieres enviar la factura?
-          </Typography>
-
-          {data?.cliente?.email && (
-            <Typography variant="body2">
-              Email cliente: {data.cliente.email}
-            </Typography>
-          )}
-
-          {data?.cliente?.telefono && (
-            <Typography variant="body2">
-              Teléfono cliente: {data.cliente.telefono}
-            </Typography>
-          )}
-        </DialogContent>
-
-        <DialogActions>
-          <Button onClick={() => setShareOpen(false)} disabled={shareLoading}>
-            Cerrar
-          </Button>
-
-          <Button
-            startIcon={<EmailIcon />}
-            onClick={() => handleShare('email')}
-            disabled={shareLoading}
-          >
-            Enviar email
-          </Button>
-
-          <Button
-            variant="contained"
-            color="success"
-            startIcon={<WhatsAppIcon />}
-            onClick={() => handleShare('whatsapp')}
-            disabled={shareLoading}
-          >
-            WhatsApp
-          </Button>
-        </DialogActions>
-      </Dialog>
+      <ConfirmActionDialog
+        open={confirmPay}
+        loading={paying}
+        title="Marcar factura como pagada"
+        description={`¿Confirmas que se ha cobrado la factura ${documento.numero}/${documento.anio} por ${formatEuro(documento.total)}?`}
+        confirmText="Marcar pagada"
+        confirmColor="success"
+        onClose={() => setConfirmPay(false)}
+        onConfirm={handleMarkAsPaid}
+      />
 
       <Snackbar
         open={feedback.open}

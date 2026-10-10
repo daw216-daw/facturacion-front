@@ -14,15 +14,22 @@ import {
   CardContent,
   CardActions,
   Divider,
+  Dialog,
+  DialogTitle,
+  DialogContent,
+  DialogActions,
 } from '@mui/material';
 
 import AddIcon from '@mui/icons-material/Add';
 import EditIcon from '@mui/icons-material/Edit';
 import CheckCircleOutlineIcon from '@mui/icons-material/CheckCircleOutline';
 import CancelOutlinedIcon from '@mui/icons-material/CancelOutlined';
+import VisibilityIcon from '@mui/icons-material/Visibility';
 
 import { getDocumentoTextos } from '../services/documentoTextos.service';
 import DocumentoTextoForm from '../components/DocumentoTextoForm';
+import DocumentoTextoPreview from '../components/DocumentoTextoPreview';
+import { getTituloDoc } from '../../../common/TextosLegalesSelector';
 
 function stripHtml(html) {
   return html?.replace(/<[^>]*>/g, ' ').replace(/\s+/g, ' ').trim() || '';
@@ -62,6 +69,7 @@ function ActivoChip({ activo }) {
 export default function DocumentoTextosPage() {
   const [rows, setRows] = useState([]);
   const [selected, setSelected] = useState(null);
+  const [verTexto, setVerTexto] = useState(null); // texto cuyo contenido se muestra completo
   const [loading, setLoading] = useState(true);
 
   const theme = useTheme();
@@ -99,25 +107,19 @@ export default function DocumentoTextosPage() {
       renderCell: (params) => <TipoChip tipo={params.value} />,
     },
     {
-      field: 'contenido',
-      headerName: 'Contenido',
+      field: 'titulo',
+      headerName: 'Título / contenido',
       flex: 1,
-      sortable: false,
+      minWidth: 260,
       renderCell: (params) => (
-        <Tooltip title={stripHtml(params.value).slice(0, 200)} placement="top">
-          <Typography
-            variant="body2"
-            color="text.secondary"
-            sx={{
-              overflow: 'hidden',
-              textOverflow: 'ellipsis',
-              whiteSpace: 'nowrap',
-              maxWidth: '100%',
-            }}
-          >
-            {stripHtml(params.value) || '—'}
+        <Box sx={{ display: 'flex', flexDirection: 'column', justifyContent: 'center', height: '100%', minWidth: 0, lineHeight: 1.3 }}>
+          <Typography variant="body2" fontWeight={600} noWrap>
+            {getTituloDoc(params.row)}
           </Typography>
-        </Tooltip>
+          <Typography variant="caption" color="text.secondary" noWrap>
+            {stripHtml(params.row.contenido) || '—'}
+          </Typography>
+        </Box>
       ),
     },
     {
@@ -128,19 +130,26 @@ export default function DocumentoTextosPage() {
     },
     {
       field: 'actions',
-      headerName: '',
-      width: 80,
+      headerName: 'Acciones',
+      width: 110,
       sortable: false,
       renderCell: (params) => (
-        <Tooltip title="Editar">
-          <IconButton
-            size="small"
-            color="primary"
-            onClick={() => setSelected(params.row)}
-          >
-            <EditIcon fontSize="small" />
-          </IconButton>
-        </Tooltip>
+        <>
+          <Tooltip title="Ver contenido">
+            <IconButton size="small" onClick={() => setVerTexto(params.row)}>
+              <VisibilityIcon fontSize="small" />
+            </IconButton>
+          </Tooltip>
+          <Tooltip title="Editar">
+            <IconButton
+              size="small"
+              color="primary"
+              onClick={() => setSelected(params.row)}
+            >
+              <EditIcon fontSize="small" />
+            </IconButton>
+          </Tooltip>
+        </>
       ),
     },
   ];
@@ -170,7 +179,7 @@ export default function DocumentoTextosPage() {
         <Button
           variant="contained"
           startIcon={<AddIcon />}
-          onClick={() => setSelected({ tipo: 'presupuesto', contenido: '', activo: true })}
+          onClick={() => setSelected({ tipo: 'presupuesto', titulo: '', contenido: '', activo: true })}
         >
           Nuevo texto legal
         </Button>
@@ -183,6 +192,7 @@ export default function DocumentoTextosPage() {
           columns={columns}
           loading={loading}
           autoHeight
+          rowHeight={60}
           disableRowSelectionOnClick
           pageSizeOptions={[10, 25]}
           initialState={{ pagination: { paginationModel: { pageSize: 10 } } }}
@@ -209,11 +219,14 @@ export default function DocumentoTextosPage() {
                   </Typography>
                 </Stack>
 
+                <Typography variant="subtitle2" fontWeight={600} mt={1}>
+                  {getTituloDoc(item)}
+                </Typography>
                 <Typography
                   variant="body2"
                   color="text.secondary"
                   sx={{
-                    mt: 1,
+                    mt: 0.5,
                     display: '-webkit-box',
                     WebkitLineClamp: 2,
                     WebkitBoxOrient: 'vertical',
@@ -229,6 +242,13 @@ export default function DocumentoTextosPage() {
               <CardActions sx={{ justifyContent: 'flex-end', px: 2 }}>
                 <Button
                   size="small"
+                  startIcon={<VisibilityIcon />}
+                  onClick={() => setVerTexto(item)}
+                >
+                  Ver
+                </Button>
+                <Button
+                  size="small"
                   startIcon={<EditIcon />}
                   onClick={() => setSelected(item)}
                 >
@@ -239,6 +259,35 @@ export default function DocumentoTextosPage() {
           ))}
         </Stack>
       )}
+
+      {/* VER CONTENIDO */}
+      <Dialog open={!!verTexto} onClose={() => setVerTexto(null)} fullWidth maxWidth="sm">
+        <DialogTitle>
+          {verTexto && getTituloDoc(verTexto)}
+          {verTexto && (
+            <Stack direction="row" spacing={1} mt={0.5}>
+              <TipoChip tipo={verTexto.tipo} />
+              <ActivoChip activo={verTexto.activo} />
+            </Stack>
+          )}
+        </DialogTitle>
+        <DialogContent dividers>
+          {verTexto && <DocumentoTextoPreview html={verTexto.contenido} />}
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={() => setVerTexto(null)}>Cerrar</Button>
+          <Button
+            variant="contained"
+            startIcon={<EditIcon />}
+            onClick={() => {
+              setSelected(verTexto);
+              setVerTexto(null);
+            }}
+          >
+            Editar
+          </Button>
+        </DialogActions>
+      </Dialog>
 
       {/* MODAL */}
       {selected && (

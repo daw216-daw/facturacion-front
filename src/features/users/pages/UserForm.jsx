@@ -10,6 +10,7 @@ import {
   Grid,
   useTheme,
   useMediaQuery,
+  Alert,
 } from '@mui/material';
 
 import {
@@ -18,8 +19,8 @@ import {
 } from '../services/users.service';
 
 const ROLES = [
-  { value: 'admin', label: 'Admin' },
-  { value: 'emisor', label: 'Emisor' },
+  { value: 'admin', label: 'Administrador (acceso completo al panel)' },
+  { value: 'emisor', label: 'Emisor (panel de emisor, sin acceso al panel de administración)' },
 ];
 
 const EMPTY_FORM = {
@@ -40,9 +41,11 @@ export default function UserForm({
 
   const [form, setForm] = useState(EMPTY_FORM);
   const [saving, setSaving] = useState(false);
+  const [errorMsg, setErrorMsg] = useState('');
 
   // 🔄 cargar datos si es edición / reset si es nuevo
   useEffect(() => {
+    setErrorMsg('');
     if (user) {
       setForm({
         name: user.name || '',
@@ -70,6 +73,7 @@ export default function UserForm({
   const handleSubmit = async () => {
     try {
       setSaving(true);
+      setErrorMsg('');
 
       const payload = { ...form };
       if (!payload.password) delete payload.password; // no cambiar pass si está vacío
@@ -84,7 +88,13 @@ export default function UserForm({
       handleClose();
     } catch (e) {
       console.error(e);
-      alert('Error al guardar el usuario');
+      // Mensaje del API (validación en español) o genérico
+      const errores = e.response?.data?.errors;
+      setErrorMsg(
+        (errores && Object.values(errores)[0]?.[0]) ||
+          e.response?.data?.message ||
+          'Error al guardar el usuario'
+      );
     } finally {
       setSaving(false);
     }
@@ -103,8 +113,13 @@ export default function UserForm({
       </DialogTitle>
 
       <DialogContent dividers>
+        {errorMsg && (
+          <Alert severity="error" sx={{ mb: 2 }} onClose={() => setErrorMsg('')}>
+            {errorMsg}
+          </Alert>
+        )}
         <Grid container spacing={2}>
-          <Grid item xs={12}>
+          <Grid size={12}>
             <TextField
               fullWidth
               required
@@ -115,7 +130,7 @@ export default function UserForm({
             />
           </Grid>
 
-          <Grid item xs={12}>
+          <Grid size={12}>
             <TextField
               fullWidth
               required
@@ -126,7 +141,7 @@ export default function UserForm({
             />
           </Grid>
 
-          <Grid item xs={12}>
+          <Grid size={12}>
             <TextField
               fullWidth
               type="password"
@@ -134,10 +149,16 @@ export default function UserForm({
               name="password"
               value={form.password}
               onChange={handleChange}
+              autoComplete="new-password"
+              helperText={
+                user
+                  ? 'Déjala vacía para no cambiarla. Si la cambias, se cerrarán sus sesiones abiertas.'
+                  : 'Mínimo 8 caracteres'
+              }
             />
           </Grid>
 
-          <Grid item xs={12}>
+          <Grid size={12}>
             <TextField
               select
               fullWidth

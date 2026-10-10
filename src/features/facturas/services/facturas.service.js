@@ -1,10 +1,14 @@
 import api from '../../../lib/api';
 
+// params: page, per_page, estado (emitida|pagada|vencida), search (nº, nº/año o cliente)
+// Respuesta: paginación Laravel ({ data, total, current_page, … })
 export async function getFacturas(params = {}) {
   const response = await api.get('/facturas', {
     params: {
       per_page: params.per_page || 10,
       page: params.page || 1,
+      ...(params.estado ? { estado: params.estado } : {}),
+      ...(params.search?.trim() ? { search: params.search.trim() } : {}),
     },
   });
 
@@ -24,6 +28,15 @@ export async function getFacturaPreview(id) {
 export async function createFactura(data) {
   const response = await api.post('/facturas', data);
   return response.data.data ?? response.data;
+}
+
+/**
+ * Editar IVA y fecha (solo facturas pendientes de cobro; la fecha debe ser del mismo año)
+ * data: { iva_porcentaje, fecha }
+ */
+export async function updateFactura(id, data) {
+  const response = await api.put(`/facturas/${id}`, data);
+  return response.data;
 }
 
 export async function marcarFacturaPagada(id) {

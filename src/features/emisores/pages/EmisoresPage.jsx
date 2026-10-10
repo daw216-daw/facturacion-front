@@ -7,6 +7,7 @@ import {
   Stack,
   useTheme,
   useMediaQuery,
+  Tooltip,
 } from '@mui/material';
 import { DataGrid } from '@mui/x-data-grid';
 import AddIcon from '@mui/icons-material/Add';
@@ -37,24 +38,27 @@ export default function EmisoresPage() {
   }, []);
 
   const columns = [
-    { field: 'nombre', headerName: 'Nombre', flex: 1 },
+    { field: 'nombre', headerName: 'Nombre', flex: 1, minWidth: 160 },
     { field: 'nif', headerName: 'NIF', width: 150 },
-    { field: 'email', headerName: 'Email', flex: 1 },
+    { field: 'email', headerName: 'Email', flex: 1, minWidth: 160 },
     { field: 'telefono', headerName: 'Teléfono', width: 150 },
     {
       field: 'actions',
-      headerName: '',
-      width: 80,
+      headerName: 'Acciones',
+      width: 100,
+      sortable: false,
       renderCell: (params) => (
-        <IconButton
-          size="small"
-          onClick={() => {
-            setSelectedEmisor(params.row);
-            setOpenForm(true);
-          }}
-        >
-          <EditIcon />
-        </IconButton>
+        <Tooltip title="Editar emisor">
+          <IconButton
+            size="small"
+            onClick={() => {
+              setSelectedEmisor(params.row);
+              setOpenForm(true);
+            }}
+          >
+            <EditIcon />
+          </IconButton>
+        </Tooltip>
       ),
     },
   ];

@@ -1,6 +1,8 @@
 import { createBrowserRouter, Navigate } from 'react-router-dom';
 
 import LoginPage from '../features/auth/pages/LoginPage';
+import UnauthorizedPage from '../features/auth/pages/UnauthorizedPage';
+import RootRedirect from './RootRedirect';
 import RequireAuth from '../guards/RequireAuth';
 import RequireRole from '../guards/RequireRole';
 
@@ -18,15 +20,20 @@ import FacturaPreview from '../features/facturas/pages/FacturaPreview';
 import EmisoresPage from '../features/emisores/pages/EmisoresPage';
 import SeriesPage from '../features/series/pages/SeriesPage';
 import DocumentoTextosPage from '../features/documentoTextos/pages/DocumentoTextosPage';
+import CorreosPage from '../features/correos/pages/CorreosPage';
 
 const router = createBrowserRouter([
+  {
+    path: '/',
+    element: <RootRedirect />,
+  },
   {
     path: '/login',
     element: <LoginPage />,
   },
   {
     path: '/unauthorized',
-    element: <h2>No tienes permisos para acceder a esta sección</h2>,
+    element: <UnauthorizedPage />,
   },
   {
     element: <RequireAuth />,
@@ -48,8 +55,7 @@ const router = createBrowserRouter([
               { path: 'emisores', element: <EmisoresPage /> },
               { path: 'series', element: <SeriesPage /> },
               { path: 'documento-textos', element: <DocumentoTextosPage /> },
-
-
+              { path: 'correos', element: <CorreosPage /> },
             ],
           },
         ],
@@ -69,8 +75,9 @@ const router = createBrowserRouter([
     ],
   },
   {
+    // Ruta desconocida → inicio (panel según rol o login)
     path: '*',
-    element: <Navigate to="/login" replace />,
+    element: <Navigate to="/" replace />,
   },
 ]);
 

@@ -59,9 +59,10 @@ export async function reactivateCliente(id) {
   return response.data.data;
 }
 
+// Todos los clientes activos para los buscadores de los formularios (antes solo llegaban 10)
 export async function getClientesSelect() {
   const response = await api.get('/clientes', {
-    params: { solo_activos: true },
+    params: { solo_activos: true, per_page: 1000 },
   });
   return response.data.data ?? response.data;
 }

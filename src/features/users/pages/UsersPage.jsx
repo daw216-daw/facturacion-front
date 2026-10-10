@@ -1,14 +1,19 @@
-import { useEffect, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import { DataGrid } from '@mui/x-data-grid';
 import {
+  Alert,
   Box,
-  Typography,
-  useTheme,
-  useMediaQuery,
-  Stack,
-  IconButton,
   Button,
   Chip,
+  CircularProgress,
+  IconButton,
+  Pagination,
+  Snackbar,
+  Stack,
+  Tooltip,
+  Typography,
+  useMediaQuery,
+  useTheme,
 } from '@mui/material';
 
 import AddIcon from '@mui/icons-material/Add';
@@ -21,245 +26,282 @@ import {
   deleteUser,
   reactivateUser,
 } from '../services/users.service';
+import { useAuth } from '../../auth/context/AuthContext';
 
 import UserCard from './UserCard';
 import UserForm from './UserForm';
 import ConfirmActionDialog from '../../../common/ConfirmActionDialog';
 
+const ROLES = { admin: 'Administrador', emisor: 'Emisor' };
+
 export default function UsersPage() {
+  const { user: usuarioActual } = useAuth();
+
   const [rows, setRows] = useState([]);
+  const [rowCount, setRowCount] = useState(0);
   const [loading, setLoading] = useState(true);
-  const [meta, setMeta] = useState(null);
+  const [paginationModel, setPaginationModel] = useState({ page: 0, pageSize: 10 });
 
   const [openForm, setOpenForm] = useState(false);
   const [selectedUser, setSelectedUser] = useState(null);
 
-  const [openDeactivate, setOpenDeactivate] = useState(false);
-  const [openReactivate, setOpenReactivate] = useState(false);
   const [userToAction, setUserToAction] = useState(null);
+  const [accion, setAccion] = useState(null); // 'desactivar' | 'reactivar'
   const [processing, setProcessing] = useState(false);
+  const [feedback, setFeedback] = useState({ open: false, severity: 'success', message: '' });
 
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
-  const isTablet = useMediaQuery(theme.breakpoints.between('sm', 'md'));
 
-  const loadUsers = () => {
+  const showFeedback = (message, severity = 'success') => setFeedback({ open: true, severity, message });
+
+  const loadUsers = useCallback(() => {
     setLoading(true);
-    getUsers().then((result) => {
-      setRows(result.data);
-      setMeta(result.meta);
-      setLoading(false);
-    });
-  };
+    getUsers({ page: paginationModel.page + 1, per_page: paginationModel.pageSize })
+      .then((result) => {
+        setRows(result.data ?? []);
+        setRowCount(result.meta?.total ?? 0);
+      })
+      .catch((e) => {
+        console.error(e);
+        showFeedback('No se pudieron cargar los usuarios', 'error');
+      })
+      .finally(() => setLoading(false));
+  }, [paginationModel]);
 
   useEffect(() => {
     loadUsers();
-  }, []);
+  }, [loadUsers]);
 
-  /* ---------------- COLUMNS ---------------- */
+  const esYo = (u) => u?.id === usuarioActual?.id;
 
-  const columnsDesktop = [
-    { field: 'name', headerName: 'Nombre', minWidth: 200, flex: 1 },
-    { field: 'email', headerName: 'Email', minWidth: 220, flex: 1 },
+  const editar = (u) => {
+    setSelectedUser(u);
+    setOpenForm(true);
+  };
+
+  const pedirAccion = (u, tipo) => {
+    setUserToAction(u);
+    setAccion(tipo);
+  };
+
+  const cerrarAccion = () => {
+    setUserToAction(null);
+    setAccion(null);
+  };
+
+  const handleConfirm = async () => {
+    if (!userToAction) return;
+    try {
+      setProcessing(true);
+      if (accion === 'desactivar') {
+        await deleteUser(userToAction.id);
+        showFeedback('Usuario desactivado: se han cerrado sus sesiones', 'info');
+      } else {
+        await reactivateUser(userToAction.id);
+        showFeedback('Usuario reactivado');
+      }
+      loadUsers();
+    } catch (e) {
+      console.error(e);
+      const errores = e.response?.data?.errors;
+      showFeedback(
+        (errores && Object.values(errores)[0]?.[0]) || e.response?.data?.message || 'No se pudo completar la acción',
+        'error'
+      );
+    } finally {
+      setProcessing(false);
+      cerrarAccion();
+    }
+  };
+
+  /* ---------------- COLUMNAS ---------------- */
+
+  const columns = [
+    {
+      field: 'name',
+      headerName: 'Nombre',
+      flex: 1,
+      minWidth: 160,
+      renderCell: (params) => (
+        <Typography variant="body2" fontWeight={500} noWrap>
+          {params.value}
+          {esYo(params.row) && (
+            <Typography component="span" variant="caption" color="text.secondary" ml={1}>
+              (tú)
+            </Typography>
+          )}
+        </Typography>
+      ),
+    },
+    { field: 'email', headerName: 'Email', flex: 1, minWidth: 180 },
     {
       field: 'role',
       headerName: 'Rol',
-      width: 130,
+      width: 140,
       renderCell: (params) => (
         <Chip
           size="small"
-          label={params.value}
+          label={ROLES[params.value] ?? params.value}
           color={params.value === 'admin' ? 'primary' : 'default'}
         />
       ),
     },
-    {
-      field: 'activo',
-      headerName: 'Activo',
-      width: 90,
-      type: 'boolean',
-    },
-  ];
-
-  const columnsTablet = [
-    { field: 'name', headerName: 'Nombre', flex: 1 },
-    { field: 'email', headerName: 'Email', flex: 1 },
-    { field: 'activo', headerName: 'Activo', width: 90, type: 'boolean' },
-  ];
-
-  const columns = isTablet ? columnsTablet : columnsDesktop;
-
-  const columnsWithActions = [
-    ...columns,
+    { field: 'activo', headerName: 'Activo', width: 80, type: 'boolean' },
     {
       field: 'actions',
-      headerName: '',
+      headerName: 'Acciones',
       width: 100,
       sortable: false,
       renderCell: (params) => (
         <>
-          <IconButton
-            size="small"
-            onClick={() => {
-              setSelectedUser(params.row);
-              setOpenForm(true);
-            }}
-          >
-            <EditIcon />
-          </IconButton>
+          <Tooltip title="Editar usuario">
+            <IconButton size="small" onClick={() => editar(params.row)}>
+              <EditIcon />
+            </IconButton>
+          </Tooltip>
 
           {params.row.activo ? (
-            <IconButton
-              size="small"
-              color="error"
-              onClick={() => {
-                setUserToAction(params.row);
-                setOpenDeactivate(true);
-              }}
-            >
-              <DeleteIcon />
-            </IconButton>
+            !esYo(params.row) && (
+              <Tooltip title="Desactivar usuario (cierra sus sesiones)">
+                <IconButton size="small" color="error" onClick={() => pedirAccion(params.row, 'desactivar')}>
+                  <DeleteIcon />
+                </IconButton>
+              </Tooltip>
+            )
           ) : (
-            <IconButton
-              size="small"
-              color="success"
-              onClick={() => {
-                setUserToAction(params.row);
-                setOpenReactivate(true);
-              }}
-            >
-              <RestoreIcon />
-            </IconButton>
+            <Tooltip title="Reactivar usuario">
+              <IconButton size="small" color="success" onClick={() => pedirAccion(params.row, 'reactivar')}>
+                <RestoreIcon />
+              </IconButton>
+            </Tooltip>
           )}
         </>
       ),
     },
   ];
 
-  /* ---------------- HANDLERS ---------------- */
-
-  const handleDeactivate = async () => {
-    if (!userToAction) return;
-    try {
-      setProcessing(true);
-      await deleteUser(userToAction.id);
-      loadUsers();
-    } finally {
-      setProcessing(false);
-      setOpenDeactivate(false);
-    }
-  };
-
-  const handleReactivate = async () => {
-    if (!userToAction) return;
-    try {
-      setProcessing(true);
-      await reactivateUser(userToAction.id);
-      loadUsers();
-    } finally {
-      setProcessing(false);
-      setOpenReactivate(false);
-    }
-  };
+  const totalPaginas = Math.max(1, Math.ceil(rowCount / paginationModel.pageSize));
 
   /* ---------------- RENDER ---------------- */
 
   return (
     <Box sx={{ width: '100%' }}>
-      {/* HEADER */}
       <Box
         sx={{
           display: 'flex',
           justifyContent: 'space-between',
           alignItems: 'center',
+          gap: 1,
           mb: 2,
         }}
       >
         <Typography variant="h5">Usuarios</Typography>
 
-        <Button
-          variant="contained"
-          startIcon={<AddIcon />}
-          onClick={() => {
-            setSelectedUser(null);
-            setOpenForm(true);
-          }}
-        >
-          Nuevo usuario
+        <Button variant="contained" startIcon={<AddIcon />} onClick={() => editar(null)}>
+          {isMobile ? 'Nuevo' : 'Nuevo usuario'}
         </Button>
       </Box>
 
-      {/* MOBILE → CARDS */}
+      {/* MÓVIL → TARJETAS */}
       {isMobile && (
-        <Stack spacing={2}>
-          {rows.map((user) => (
-            <UserCard
-              key={user.id}
-              user={user}
-              onEdit={(u) => {
-                setSelectedUser(u);
-                setOpenForm(true);
-              }}
-              onDeactivate={(u) => {
-                setUserToAction(u);
-                setOpenDeactivate(true);
-              }}
-              onReactivate={(u) => {
-                setUserToAction(u);
-                setOpenReactivate(true);
-              }}
-            />
-          ))}
-        </Stack>
+        <>
+          {loading && (
+            <Box sx={{ display: 'flex', justifyContent: 'center', py: 3 }}>
+              <CircularProgress size={28} />
+            </Box>
+          )}
+
+          <Stack spacing={2}>
+            {!loading && rows.map((u) => (
+              <UserCard
+                key={u.id}
+                user={u}
+                onEdit={editar}
+                onDeactivate={(x) => (esYo(x) ? showFeedback('No puedes desactivar tu propio usuario', 'warning') : pedirAccion(x, 'desactivar'))}
+                onReactivate={(x) => pedirAccion(x, 'reactivar')}
+              />
+            ))}
+          </Stack>
+
+          {totalPaginas > 1 && (
+            <Box sx={{ display: 'flex', justifyContent: 'center', mt: 2 }}>
+              <Pagination
+                count={totalPaginas}
+                page={paginationModel.page + 1}
+                onChange={(_, page) => setPaginationModel((prev) => ({ ...prev, page: page - 1 }))}
+                size="small"
+              />
+            </Box>
+          )}
+        </>
       )}
 
-      {/* DESKTOP / TABLET → DATAGRID */}
+      {/* TABLET / ESCRITORIO → TABLA */}
       {!isMobile && (
-        <Box sx={{ width: '100%', overflowX: 'auto' }}>
-          <Box sx={{ minWidth: 900 }}>
-            <DataGrid
-              rows={rows}
-              columns={columnsWithActions}
-              loading={loading}
-              autoHeight
-              pageSizeOptions={[10]}
-              disableRowSelectionOnClick
-            />
-          </Box>
-        </Box>
+        <DataGrid
+          rows={rows}
+          columns={columns}
+          loading={loading}
+          autoHeight
+          paginationMode="server"
+          rowCount={rowCount}
+          paginationModel={paginationModel}
+          onPaginationModelChange={setPaginationModel}
+          pageSizeOptions={[10, 25, 50]}
+          disableRowSelectionOnClick
+          disableColumnSorting
+          disableColumnMenu
+          localeText={{ noRowsLabel: 'No hay usuarios' }}
+          getRowClassName={(params) => (params.row.activo ? '' : 'fila-inactiva')}
+          sx={{
+            '& .MuiDataGrid-cell': { display: 'flex', alignItems: 'center' },
+            '& .MuiDataGrid-columnHeaderTitle': { fontWeight: 600 },
+            '& .fila-inactiva': { opacity: 0.55 },
+          }}
+        />
       )}
 
-      {/* FORM */}
       <UserForm
         open={openForm}
         user={selectedUser}
         onClose={() => setOpenForm(false)}
-        onSaved={loadUsers}
+        onSaved={() => {
+          loadUsers();
+          showFeedback('Usuario guardado');
+        }}
       />
 
-      {/* CONFIRM DESACTIVATE */}
       <ConfirmActionDialog
-        open={openDeactivate}
+        open={!!accion}
         loading={processing}
-        title="Desactivar usuario"
-        description={`¿Deseas desactivar a "${userToAction?.name}"?`}
-        confirmText="Desactivar"
-        confirmColor="error"
-        onClose={() => setOpenDeactivate(false)}
-        onConfirm={handleDeactivate}
+        title={accion === 'desactivar' ? 'Desactivar usuario' : 'Reactivar usuario'}
+        description={
+          accion === 'desactivar'
+            ? `¿Deseas desactivar a "${userToAction?.name}"? No podrá iniciar sesión y se cerrarán sus sesiones abiertas.`
+            : `¿Deseas reactivar a "${userToAction?.name}"?`
+        }
+        confirmText={accion === 'desactivar' ? 'Desactivar' : 'Reactivar'}
+        confirmColor={accion === 'desactivar' ? 'error' : 'success'}
+        onClose={cerrarAccion}
+        onConfirm={handleConfirm}
       />
 
-      {/* CONFIRM REACTIVATE */}
-      <ConfirmActionDialog
-        open={openReactivate}
-        loading={processing}
-        title="Reactivar usuario"
-        description={`¿Deseas reactivar a "${userToAction?.name}"?`}
-        confirmText="Reactivar"
-        confirmColor="success"
-        onClose={() => setOpenReactivate(false)}
-        onConfirm={handleReactivate}
-      />
+      <Snackbar
+        open={feedback.open}
+        autoHideDuration={4000}
+        onClose={(_, reason) => reason !== 'clickaway' && setFeedback((prev) => ({ ...prev, open: false }))}
+        anchorOrigin={{ vertical: 'top', horizontal: 'right' }}
+      >
+        <Alert
+          onClose={() => setFeedback((prev) => ({ ...prev, open: false }))}
+          severity={feedback.severity}
+          variant="filled"
+          sx={{ width: '100%' }}
+        >
+          {feedback.message}
+        </Alert>
+      </Snackbar>
     </Box>
   );
 }
