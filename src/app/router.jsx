@@ -21,6 +21,10 @@ import EmisoresPage from '../features/emisores/pages/EmisoresPage';
 import SeriesPage from '../features/series/pages/SeriesPage';
 import DocumentoTextosPage from '../features/documentoTextos/pages/DocumentoTextosPage';
 import CorreosPage from '../features/correos/pages/CorreosPage';
+import EmisorPresupuestosPage from '../features/emisor/pages/EmisorPresupuestosPage';
+import EmisorPresupuestoPreview from '../features/emisor/pages/EmisorPresupuestoPreview';
+import EmisorFacturasPage from '../features/emisor/pages/EmisorFacturasPage';
+import EmisorFacturaPreview from '../features/emisor/pages/EmisorFacturaPreview';
 
 const router = createBrowserRouter([
   {
@@ -68,6 +72,10 @@ const router = createBrowserRouter([
             element: <EmisorLayout />,
             children: [
               { index: true, element: <EmisorDashboard /> },
+              { path: 'presupuestos', element: <EmisorPresupuestosPage /> },
+              { path: 'presupuestos/:id', element: <EmisorPresupuestoPreview /> },
+              { path: 'facturas', element: <EmisorFacturasPage /> },
+              { path: 'facturas/:id', element: <EmisorFacturaPreview /> },
             ],
           },
         ],

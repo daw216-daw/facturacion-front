@@ -147,6 +147,23 @@ export default function UsersPage() {
         />
       ),
     },
+    {
+      field: 'emisor',
+      headerName: 'Emisor asociado',
+      flex: 1,
+      minWidth: 160,
+      sortable: false,
+      renderCell: (params) => {
+        if (params.row.role !== 'emisor') {
+          return <Typography variant="body2" color="text.disabled">—</Typography>;
+        }
+        return (
+          <Typography variant="body2" color={params.row.emisor ? 'text.primary' : 'warning.main'} noWrap>
+            {params.row.emisor?.nombre ?? 'Sin asignar'}
+          </Typography>
+        );
+      },
+    },
     { field: 'activo', headerName: 'Activo', width: 80, type: 'boolean' },
     {
       field: 'actions',

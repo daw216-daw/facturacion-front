@@ -17,6 +17,7 @@ import {
   createUser,
   updateUser,
 } from '../services/users.service';
+import { getEmisores } from '../../emisores/services/emisores.service';
 
 const ROLES = [
   { value: 'admin', label: 'Administrador (acceso completo al panel)' },
@@ -28,6 +29,7 @@ const EMPTY_FORM = {
   email: '',
   password: '',
   role: 'emisor',
+  emisor_id: '',
 };
 
 export default function UserForm({
@@ -42,6 +44,7 @@ export default function UserForm({
   const [form, setForm] = useState(EMPTY_FORM);
   const [saving, setSaving] = useState(false);
   const [errorMsg, setErrorMsg] = useState('');
+  const [emisores, setEmisores] = useState([]);
 
   // 🔄 cargar datos si es edición / reset si es nuevo
   useEffect(() => {
@@ -52,11 +55,21 @@ export default function UserForm({
         email: user.email || '',
         password: '',
         role: user.role || 'emisor',
+        emisor_id: user.emisor_id || '',
       });
     } else {
       setForm(EMPTY_FORM);
     }
   }, [user, open]);
+
+  // Lista de emisores para el selector (solo hace falta si el rol es emisor)
+  useEffect(() => {
+    if (!open) return;
+
+    getEmisores()
+      .then((result) => setEmisores(result?.data ?? result ?? []))
+      .catch((e) => console.error(e));
+  }, [open]);
 
   const handleChange = (e) => {
     setForm((prev) => ({
@@ -77,6 +90,8 @@ export default function UserForm({
 
       const payload = { ...form };
       if (!payload.password) delete payload.password; // no cambiar pass si está vacío
+      // Un admin no tiene emisor asociado
+      payload.emisor_id = payload.role === 'emisor' ? payload.emisor_id : null;
 
       if (user) {
         await updateUser(user.id, payload);
@@ -174,6 +189,32 @@ export default function UserForm({
               ))}
             </TextField>
           </Grid>
+
+          {form.role === 'emisor' && (
+            <Grid size={12}>
+              <TextField
+                select
+                fullWidth
+                required
+                label="Emisor asociado"
+                name="emisor_id"
+                value={form.emisor_id}
+                onChange={handleChange}
+                helperText="Los presupuestos y facturas que verá este usuario en su panel"
+              >
+                {emisores.length === 0 && (
+                  <MenuItem value="" disabled>
+                    No hay emisores dados de alta
+                  </MenuItem>
+                )}
+                {emisores.map((e) => (
+                  <MenuItem key={e.id} value={e.id}>
+                    {e.nombre}
+                  </MenuItem>
+                ))}
+              </TextField>
+            </Grid>
+          )}
         </Grid>
       </DialogContent>
 
@@ -185,7 +226,12 @@ export default function UserForm({
         <Button
           variant="contained"
           onClick={handleSubmit}
-          disabled={saving || !form.name || !form.email}
+          disabled={
+            saving ||
+            !form.name ||
+            !form.email ||
+            (form.role === 'emisor' && !form.emisor_id)
+          }
         >
           {user ? 'Guardar cambios' : 'Crear usuario'}
         </Button>

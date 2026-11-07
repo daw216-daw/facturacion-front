@@ -9,7 +9,7 @@ src/
     App.jsx            ← RouterProvider + AuthContext check
     router.jsx         ← todas las rutas
     Dashboard.jsx      ← dashboard admin: conteos e importes (GET /dashboard)
-    EmisorDashboard.jsx← dashboard emisor (placeholder — sin funcionalidad)
+    EmisorDashboard.jsx← dashboard emisor: bienvenida + 2 tarjetas resumen (solo lectura)
   features/
     auth/
       context/AuthContext.jsx   ← useAuth() → { user, login, logout, loading }
@@ -18,6 +18,12 @@ src/
       pages/           ← páginas y formularios
       components/      ← componentes de la feature (no todas tienen esta carpeta)
       services/        ← <feature>.service.js — llamadas a la API
+    emisor/              ← panel de solo lectura para usuarios con role=emisor
+      pages/EmisorPresupuestosPage.jsx, EmisorFacturasPage.jsx
+      pages/EmisorPresupuestoPreview.jsx, EmisorFacturaPreview.jsx
+      services/emisorPresupuestos.service.js, emisorFacturas.service.js  ← llaman a /emisor/...
+    presupuestos/components/PresupuestoDocumentSheet.jsx  ← hoja de presupuesto extraída, la usan admin y emisor
+    facturas/components/FacturaDocumentSheet.jsx           ← hoja de factura extraída, la usan admin y emisor
   common/
     ConfirmActionDialog.jsx     ← dialog genérico de confirmación
     DocumentoTextoEditor.jsx    ← editor TipTap con toolbar MUI
@@ -42,12 +48,12 @@ src/
       AdminLayout.jsx  ← sidebar colapsable + topbar
       AdminSidebar.jsx
       AdminTopBar.jsx
-    EmisorLayout.jsx   ← barra simple, sin sidebar
+    EmisorLayout.jsx   ← AppBar + Tabs (sin sidebar), ThemeProvider anidado con la paleta "emisor", responsive
   lib/
     api.js             ← instancia Axios con interceptores (token + 401 → /login)
   styles/
     ThemeContext.jsx   ← ThemeModeProvider, useThemeMode() → { mode, toggleTheme }
-    theme.js           ← getTheme(mode) — tema MUI light/dark
+    theme.js           ← PALETAS (admin|emisor), getTheme(mode, variante='admin') — tema MUI light/dark por sección
 ```
 
 ## Variables de entorno
@@ -127,6 +133,15 @@ TipTap con StarterKit: bold, italic, strike, heading (1-3), bulletList, orderedL
 /admin/correos                  → CorreosPage (vista previa de los emails)
 ```
 
+## Rutas emisor (solo lectura — role=emisor)
+```
+/emisor                                  → EmisorDashboard
+/emisor/presupuestos                     → EmisorPresupuestosPage
+/emisor/presupuestos/:id/preview         → EmisorPresupuestoPreview
+/emisor/facturas                         → EmisorFacturasPage
+/emisor/facturas/:id/preview             → EmisorFacturaPreview
+```
+
 ## Consumo de la API — formatos esperados
 | Servicio | Formato respuesta |
 |---|---|
@@ -144,7 +159,7 @@ TipTap con StarterKit: bold, italic, strike, heading (1-3), bulletList, orderedL
 - Usar `useTheme()` + `useMediaQuery()` de MUI para responsive
 
 ## Notas
-- Rol `emisor`: layout y dashboard existen pero sin funcionalidad real (placeholder)
+- Rol `emisor`: panel de **solo lectura** de sus propios presupuestos y facturas (previsualizar y descargar el PDF); no puede crear, editar, enviar ni facturar nada. Tema con paleta propia (`PALETAS.emisor` en `styles/theme.js`) para diferenciarlo visualmente del panel admin.
 - El `AdminSidebar` controla la navegación — añadir nuevas rutas admin también ahí
 
 ## Registro de cambios
@@ -855,3 +870,63 @@ Archivo: `src/common/DocumentoTextoEditor.jsx`. Sus props siguen siendo compatib
   - lo **pendiente** para siguientes versiones.
 - Es un SVG: se abre en el navegador o en VS Code y se puede exportar a PNG desde el navegador. Se generó con un script de Python. Si cambia la arquitectura, hay que actualizar el SVG o regenerarlo.
 - Git: no se ha hecho commit ni etiqueta (decisión del usuario). Comandos sugeridos en la respuesta de la sesión: commit + `git tag -a v1.0.0` en los dos repos y `git rm --cached .env` en el front.
+
+### 2026-10-10 — Despliegue adaptado al servidor real de Hostinger + protección de la raíz del Laravel
+- Servidor del usuario: Hostinger Business con **varios proyectos**. Modelo existente (*finanzas*):
+  - `~/domains/<dominio>/public_html/<proyecto>/{api,web}`;
+  - subdominios con **"Carpeta personalizada"**: `api-<proyecto>` → `<proyecto>/api/public` y `app-<proyecto>` → `<proyecto>/web`.
+  - En `~/domains/<dominio>/` hay un archivo `DO_NOT_UPLOAD_HERE`: no se sube nada a ese nivel.
+- **Fallo de seguridad detectado en ese modelo**: como el Laravel está dentro de `public_html`, desde el dominio principal se podía descargar `…/<proyecto>/api/storage/logs/laravel.log` y `composer.json` (HTTP 200).
+- Nuevo **`api-facturacion/.htaccess`** (raíz del repo):
+  - `Options -Indexes`, `RewriteRule ^(?!public(/|$)) - [F,L]` (respaldo `Require all denied` sin mod_rewrite) y bloqueo de archivos ocultos.
+  - Solo `public/` es accesible. No afecta al subdominio, que apunta a `public/` (con su propio `.htaccess`), ni al desarrollo local.
+- `DEPLOY-HOSTINGER.md` reescrito con esa estructura:
+  - `public_html/facturacion/api` y `public_html/facturacion/web`;
+  - subdominios `api-facturacion.<dominio>` y `app-facturacion.<dominio>` con carpeta personalizada;
+  - `git clone … api`; cron en `public_html/facturacion/api/artisan`;
+  - comprobación con `curl` de que `/facturacion/api/composer.json` da 403.
+  - Se elimina la opción de enlace simbólico fuera de `public_html`.
+- `.env.production.example` (API y front): `APP_URL`, `CORS_ALLOWED_ORIGINS` y `VITE_API_BASE_URL` pasan a usar `api-facturacion` / `app-facturacion`.
+- El mapa concreto del servidor (usuario, dominios, otros proyectos) se guarda en la memoria de Claude, no en el repositorio, hasta confirmar si los repos son públicos.
+
+### 2026-11-07 — Validación de datos fiscales antes de facturar (aviso bloqueante)
+**Causa**: si se editaba el NIF de un cliente después de facturar, la factura ya emitida no cambiaba (dato "congelado", a propósito, ver registro de 2026-10-10). El problema real era poder llegar a facturar sin NIF.
+
+**API**: ver `api-facturacion/CLAUDE.md` (registro 2026-11-07) — `Cliente::camposFiscalesFaltantes()` + validación en `FacturacionService::facturarPresupuesto()` y `FacturaController::store()`, con un 422 `{ message: "El cliente no tiene NIF. Complétalo antes de facturar." }`.
+
+**Front**: el mensaje del 422 ya se mostraba como `Alert` genérico en los sitios donde se factura (no hizo falta un tratamiento especial, al reutilizar `err.response?.data?.message`):
+- `features/presupuestos/components/FacturarDialog.jsx` (facturar desde el listado de presupuestos).
+- `features/facturas/pages/FacturaForm.jsx` (factura manual, `store`).
+
+No se implementó (quedó explícitamente pendiente, a decidir más adelante si hace falta):
+- Límite de ediciones (p. ej. 2) a la factura tras corregirla.
+- Posibilidad de editar un presupuesto enviado/aceptado sin reenviarlo el mismo día (hoy `requiere_reenvio` solo abre el diálogo de compartir en el momento; no se persiste).
+
+### 2026-11-07 — `users.emisor_id`: formulario de usuarios
+Ver `api-facturacion/CLAUDE.md` (registro 2026-11-07) para la columna y validación en el API.
+- `features/users/pages/UserForm.jsx`: nuevo campo "Emisor asociado" (`Autocomplete`/select sobre `getEmisores()`), visible y obligatorio solo cuando `role = emisor`.
+- `features/users/pages/UsersPage.jsx`: columna "Emisor asociado" en el DataGrid.
+- `features/users/pages/UserCard.jsx`: el emisor asociado se muestra también en la tarjeta de móvil.
+
+### 2026-11-07 — Portal de solo lectura para emisores: tema propio, layout responsive, previsualizar y descargar
+Objetivo acordado con el usuario: un usuario con `role=emisor` (asociado a su `Emisor` vía `users.emisor_id`, ver entrada anterior) entra a un panel **con otro color** para diferenciarlo del de admin, **totalmente responsive**, donde puede ver sus presupuestos y facturas, previsualizarlos y descargarlos en PDF.
+
+**Tema**
+- `styles/theme.js`: nuevo objeto `PALETAS` (`admin` | `emisor`, cada una con su `primary`/`secondary`) y `getTheme(mode, variante = 'admin')`.
+- `layouts/EmisorLayout.jsx` reescrito: envuelve sus rutas en un `ThemeProvider` anidado con `getTheme(mode, 'emisor')`, así que **solo el panel del emisor** cambia de color (el admin sigue con su paleta). AppBar + `Tabs` de navegación (Inicio / Presupuestos / Facturas) en vez del sidebar de escritorio del admin — pensado para que funcione igual de bien en móvil.
+
+**Extracción de componentes compartidos** (para no duplicar la lógica de "hoja que imita el PDF" entre admin y emisor):
+- Nuevo `features/presupuestos/components/PresupuestoDocumentSheet.jsx` y `features/facturas/components/FacturaDocumentSheet.jsx`, con el contenido que antes estaba embebido en `PresupuestoPreview.jsx`/`FacturaPreview.jsx`.
+- `PresupuestoPreview.jsx` y `FacturaPreview.jsx` (admin) se actualizaron para usar estos componentes — sin cambios de comportamiento para el admin.
+- `common/documentPreview/PreviewShell.jsx`: `PreviewToolbar` acepta un `topOffset` opcional y `PreviewLayout` un `asideTop` opcional (los dos con valor por defecto igual al que ya se usaba, así que el admin no cambia).
+
+**Páginas y servicios nuevos (`features/emisor/`)**
+- `services/emisorPresupuestos.service.js` y `services/emisorFacturas.service.js`: llaman a `/emisor/presupuestos...` y `/emisor/facturas...` (los mismos formatos de respuesta que ya documentaba este archivo para `/presupuestos` y `/facturas`).
+- `pages/EmisorPresupuestosPage.jsx` y `pages/EmisorFacturasPage.jsx`: listados de solo lectura (DataGrid en escritorio, cards en móvil, mismo patrón que las páginas de admin), sin ninguna acción de escritura.
+- `pages/EmisorPresupuestoPreview.jsx` y `pages/EmisorFacturaPreview.jsx`: reutilizan `PresupuestoDocumentSheet`/`FacturaDocumentSheet` y `PreviewShell`; la barra solo ofrece **Descargar PDF** (sin Editar ni Compartir).
+- `app/EmisorDashboard.jsx` reescrito: bienvenida + 2 tarjetas resumen (presupuestos y facturas), enlazando a las listas.
+- `app/router.jsx`: 4 rutas nuevas bajo `/emisor` (ver "Rutas emisor" más arriba), protegidas por `RequireRole(['emisor'])` como las demás rutas del panel.
+
+**Decidido explícitamente con el usuario**: el emisor **solo puede ver** sus propios documentos (lectura + descarga de PDF); no se implementó ninguna acción de escritura (crear, editar, enviar, facturar) desde su panel.
+
+**Comprobado, no implementado en esta sesión**: se evaluó añadir un "recuérdame" en el login (token de Sanctum más largo si se marca la casilla). Se llegó a implementar y después se revirtió por completo a petición del usuario (duda razonable sobre tocar la caducidad global de los tokens); el login sigue igual que antes, sesión fija en `SANCTUM_EXPIRATION` (720 min) para todos.

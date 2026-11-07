@@ -36,6 +36,12 @@ export default function UserCard({
             sx={{ width: 'fit-content' }}
           />
 
+          {user.role === 'emisor' && (
+            <Typography variant="body2" color={user.emisor ? 'text.secondary' : 'warning.main'}>
+              Emisor: {user.emisor?.nombre ?? 'Sin asignar'}
+            </Typography>
+          )}
+
           <Chip
             size="small"
             label={user.activo ? 'Activo' : 'Inactivo'}

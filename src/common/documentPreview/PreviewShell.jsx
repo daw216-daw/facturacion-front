@@ -27,14 +27,15 @@ const botonCompactoXs = {
 };
 
 /* Barra superior: volver, título + estado y acciones */
-export function PreviewToolbar({ backLabel, onBack, title, chip, actions }) {
+export function PreviewToolbar({ backLabel, onBack, title, chip, actions, topOffset }) {
   return (
     <Paper
       variant="outlined"
       sx={{
         position: 'sticky',
-        // Debajo del AppBar fijo del admin (56px móvil / 64px escritorio)
-        top: { xs: 64, sm: 72 },
+        // Debajo del AppBar fijo del admin (56px móvil / 64px escritorio).
+        // Paneles sin AppBar fijo (p. ej. el del emisor) pasan topOffset={0}.
+        top: topOffset ?? { xs: 64, sm: 72 },
         zIndex: 5,
         mb: 2,
         px: { xs: 1, sm: 1.5 },
@@ -85,7 +86,7 @@ export function PreviewToolbar({ backLabel, onBack, title, chip, actions }) {
 }
 
 /* Documento a la izquierda, panel interno a la derecha (debajo en móvil) */
-export function PreviewLayout({ document, aside }) {
+export function PreviewLayout({ document, aside, asideTop = 140 }) {
   return (
     <Box
       sx={{
@@ -98,7 +99,7 @@ export function PreviewLayout({ document, aside }) {
       }}
     >
       <Box sx={{ minWidth: 0, order: { xs: 2, lg: 1 } }}>{document}</Box>
-      <Stack spacing={2} sx={{ order: { xs: 1, lg: 2 }, position: { lg: 'sticky' }, top: { lg: 140 } }}>
+      <Stack spacing={2} sx={{ order: { xs: 1, lg: 2 }, position: { lg: 'sticky' }, top: { lg: asideTop } }}>
         {aside}
       </Stack>
     </Box>
